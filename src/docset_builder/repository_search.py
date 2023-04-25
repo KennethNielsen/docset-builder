@@ -18,7 +18,7 @@ class DocBuildInfo:
         return all((self.docdir, self.deps, self.commands, self.icon_path))
 
 
-def get_docbuild_information(name, repository_path: Path):
+def get_docbuild_information(name, repository_path: Path) -> DocBuildInfo:
     """Return docbuild information"""
     overrides = get_overrides(name)
     docbuild_info = DocBuildInfo(**overrides)
