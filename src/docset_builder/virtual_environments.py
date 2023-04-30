@@ -5,14 +5,17 @@ from pathlib import Path
 
 import structlog
 
+from .data_structures import DocBuildInfo
 from .directories import VENV_DIR
 
 LOG = structlog.get_logger(mod="virtual_environments")
 
 
-def build_docs(name, local_repository, docbuild_information) -> Path:
+def build_docs(
+    package_name: str, local_repository: Path, docbuild_information: DocBuildInfo
+) -> Path:
     """Build the docs"""
-    venv_dir = VENV_DIR / name
+    venv_dir = VENV_DIR / package_name
     logger = LOG.bind(venv_dir=venv_dir)
     if not venv_dir.exists():
         logger.msg("Create virtual env")
@@ -29,7 +32,7 @@ def build_docs(name, local_repository, docbuild_information) -> Path:
     return _search_for_built_docs(docbuild_information)
 
 
-def _create_venv(venv_dir):
+def _create_venv(venv_dir: Path) -> None:
     """Create virtual environments in `venv_dir`"""
     subprocess.check_call(
         f"/usr/bin/env python3 -m venv {venv_dir}",
@@ -41,9 +44,9 @@ def _create_venv(venv_dir):
     )
 
 
-def _cmd_in_venv(venv_dir, command, working_dir=None):
+def _cmd_in_venv(venv_dir: Path, command: str, working_dir: Path | None = None) -> None:
     activate = venv_dir / "bin" / "activate"
-    out = subprocess.check_call(
+    subprocess.check_call(
         f"source {activate} && {command}",
         stdout=subprocess.PIPE,
         universal_newlines=True,
@@ -54,7 +57,7 @@ def _cmd_in_venv(venv_dir, command, working_dir=None):
     )
 
 
-def _search_for_built_docs(docbuild_information):
+def _search_for_built_docs(docbuild_information: DocBuildInfo) -> Path:
     for option in (("_build", "html"),):
         candidate = docbuild_information.docdir
         for component in option:

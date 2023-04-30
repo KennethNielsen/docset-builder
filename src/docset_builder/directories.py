@@ -1,8 +1,9 @@
 """This module contains commonly used modules"""
 
 from pathlib import Path
-from appdirs import user_data_dir, user_config_dir
+
 import structlog
+from appdirs import user_config_dir, user_data_dir
 
 TEAM_NAME = "docset-builder-team"
 APPLICATION_NAME = "docset-builder"

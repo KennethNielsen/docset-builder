@@ -7,8 +7,8 @@ from typing import Sequence
 import structlog
 
 from .build_docsets import build_docset
-from .pypi import get_information_for_package
 from .docset_library import install_docset
+from .pypi import get_information_for_package
 from .repositories import clone_or_update
 from .repository_search import get_docbuild_information
 from .virtual_environments import build_docs
@@ -41,7 +41,7 @@ def install(package_names: Sequence[str], build_only: bool = False) -> None:
         logger.msg("docbuild information", docbuild_information=docbuild_information)
 
         built_docs_dir = build_docs(
-            name=package_name,
+            package_name=package_name,
             local_repository=local_repository_path,
             docbuild_information=docbuild_information,
         )

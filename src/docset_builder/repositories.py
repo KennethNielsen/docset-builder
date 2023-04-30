@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 import structlog
+from structlog import BoundLogger
 
 from .data_structures import PyPIInfo
 from .directories import REPOSITORIES_DIR
@@ -23,7 +24,7 @@ def clone_or_update(name: str, pypi_info: PyPIInfo) -> Path:
     return repository_dir
 
 
-def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger):
+def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundLogger) -> None:
     """Clone the repository"""
     _logger.msg("Clone", dir=repository_dir)
     # TODO check out packages for git interaction of init time check for availability of git
@@ -32,7 +33,8 @@ def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger):
     result.check_returncode()
 
 
-def update_repository(repository_dir: Path, _logger):
+def update_repository(repository_dir: Path, _logger: BoundLogger) -> None:
+    """Update the repository at `repository_dir`"""
     _logger.msg("Update", repoitory_dir=repository_dir)
     result = subprocess.run(["git", "fetch", "origin"], cwd=repository_dir)
     result.check_returncode()

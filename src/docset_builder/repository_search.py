@@ -9,7 +9,7 @@ from docset_builder.data_structures import DocBuildInfo
 from docset_builder.overrides import DOC_BUILD_INFO_OVERRIDES
 
 
-def get_docbuild_information(name, repository_path: Path) -> DocBuildInfo:
+def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     """Return docbuild information"""
     docbuild_info = DOC_BUILD_INFO_OVERRIDES.get(name, DocBuildInfo())
 
@@ -25,7 +25,7 @@ def get_docbuild_information(name, repository_path: Path) -> DocBuildInfo:
     return docbuild_info
 
 
-def _extract_from_tox_ini(docbuild_info, tox_ini_path) -> DocBuildInfo:
+def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> DocBuildInfo:
     """Return a `docbuild_info` with information (possibly) added from .tox file"""
     config_parser = configparser.ConfigParser()
     config_parser.read(tox_ini_path)
@@ -45,11 +45,11 @@ def _extract_from_tox_ini(docbuild_info, tox_ini_path) -> DocBuildInfo:
 
     # Update dependencies
     if (deps := doc_section.get("deps")) and not docbuild_info.deps:
-        docbuild_info = evolve(docbuild_info, deps=deps.strip().split("\n"))
+        docbuild_info = evolve(docbuild_info, deps=tuple(deps.strip().split("\n")))
 
     # Update build commands
     if (commands := doc_section.get("commands")) and not docbuild_info.commands:
-        docbuild_info = evolve(docbuild_info, commands=commands.strip().split("\n"))
+        docbuild_info = evolve(docbuild_info, commands=tuple(commands.strip().split("\n")))
 
     return docbuild_info
 
@@ -61,7 +61,7 @@ def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> 
 
     # This is a bit of a stretch, but for now simply look for Sphinx in the requirements and
     # if it is there, assume that the start page is "index.html"
-    all_requirements = ()
+    all_requirements: tuple[str, ...] = ()
     for requirement in docbuild_info.deps:
         if requirement.startswith("-r") and requirement.endswith(".txt"):
             requirement_path = repository_path / requirement.removeprefix("-r ")
@@ -79,7 +79,7 @@ def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> 
     return docbuild_info
 
 
-def _requirements_from_file(requirement_path) -> Generator[str, None, None]:
+def _requirements_from_file(requirement_path: Path) -> Generator[str, None, None]:
     """Return a generator of requirements from `requirements_path` (recursively)"""
     try:
         with open(requirement_path) as file_:

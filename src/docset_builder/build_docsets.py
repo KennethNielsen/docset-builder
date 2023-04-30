@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 def build_docset(built_docs_dir: Path, docset_build_dir: Path) -> Path:
+    """Build docset into `docset_build_dir` from docs in `build_docs_dir`"""
     # doc2dash --index-page index.html
     #   ~/.local/share/docset-builder/repositories/arrow/docs/_build/html/
     subprocess.run(

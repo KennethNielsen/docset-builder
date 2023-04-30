@@ -12,7 +12,7 @@ from .directories import INSTALLED_DOCSETS_INDEX
 LOG = structlog.get_logger(mod="docset_library")
 
 
-def install_docset(docset_build_dir: Path):
+def install_docset(docset_build_dir: Path) -> None:
     """Install the built docset at `built_docs_dir`"""
     name = docset_build_dir.name
     install_base_dir = cast(Path, config.install_base_dir)

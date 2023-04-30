@@ -1,9 +1,8 @@
 """Cache implementation"""
 import json
-from pathlib import Path
 
 import structlog
-from attrs import define, asdict
+from attrs import asdict
 
 from .data_structures import PyPIInfo
 from .directories import PYPI_CACHE_DIR
@@ -11,13 +10,7 @@ from .directories import PYPI_CACHE_DIR
 LOG = structlog.get_logger(mod="cache")
 
 
-@define
-class LocalRepository:
-    path: Path
-    exists: bool
-
-
-def load_pypi_info(package_name) -> PyPIInfo | None:
+def load_pypi_info(package_name: str) -> PyPIInfo | None:
     """Return PyPi information"""
     cache_path = PYPI_CACHE_DIR / f"{package_name}.json"
     if cache_path.is_file():
@@ -25,6 +18,7 @@ def load_pypi_info(package_name) -> PyPIInfo | None:
         with open(cache_path) as file_:
             return PyPIInfo(**json.load(file_))
     LOG.msg("pypi cache miss", package_name=package_name)
+    return None
 
 
 def cache_pypi_info(package_name: str, pypi_info: PyPIInfo) -> None:
