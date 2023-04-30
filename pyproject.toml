@@ -38,3 +38,50 @@ dev = [
     #"types-appdirs==1.4.3.1",
     #"pytest-cov==4.0.0",
 ]
+
+[tool.coverage.report]
+exclude_lines = [
+    "def .*?_demo\\(.*?\\) -> None:",
+    "def .*?_demo\\(.*?\\):",
+    "if __name__ == .__main__.:"
+]
+
+[tool.ruff]
+line-length = 100
+# The documentation for the checks, and the full list of error code categories, is available here:
+# https://beta.ruff.rs/docs/rules/
+select = [
+    # The broad sets
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "W",  # pycodestyle warnings
+    # The plugins
+    "A",  # builtins
+    "C",  # flake8-comprehensions
+    "C4",  # comprehensions
+    "D",  # pydocstyle
+    "I",  # isort
+    "ISC",  # implicit string concatenation
+    "INP",  # no pep420 (name space packages)
+    "S",  #  bandit
+    "T10",  # debugger
+    "YTT", # 2020
+    # "B",  # flake8-bugbear
+]
+ignore = [
+    "D415",  # First line should end with ., ? or !
+    "D202",  # No blank lines allowed after function docstring
+    "D107",  # No docstring in __init__
+]
+exclude = ["views"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+strict = true
+strict_optional = false
+exclude = ['views']
+
+[tool.black]
+line-length=100
