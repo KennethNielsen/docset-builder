@@ -9,6 +9,7 @@ from .directories import VENV_DIR
 
 LOG = structlog.get_logger(mod="virtual_environments")
 
+
 def build_docs(name, local_repository, docbuild_information) -> Path:
     """Build the docs"""
     venv_dir = VENV_DIR / name
@@ -26,6 +27,7 @@ def build_docs(name, local_repository, docbuild_information) -> Path:
         _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.docdir)
 
     return _search_for_built_docs(docbuild_information)
+
 
 def _create_venv(venv_dir):
     """Create virtual environments in `venv_dir`"""
@@ -50,6 +52,7 @@ def _cmd_in_venv(venv_dir, command, working_dir=None):
         env=os.environ.copy(),
         cwd=working_dir,
     )
+
 
 def _search_for_built_docs(docbuild_information):
     for option in (("_build", "html"),):

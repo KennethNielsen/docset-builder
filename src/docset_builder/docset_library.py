@@ -10,6 +10,8 @@ from . import config
 from .directories import INSTALLED_DOCSETS_INDEX
 
 LOG = structlog.get_logger(mod="docset_library")
+
+
 def install_docset(docset_build_dir: Path):
     """Install the built docset at `built_docs_dir`"""
     name = docset_build_dir.name
@@ -31,12 +33,3 @@ def install_docset(docset_build_dir: Path):
     installed_docsets_index[name] = "version"
     with open(INSTALLED_DOCSETS_INDEX, "w") as file_:
         json.dump(installed_docsets_index, file_)
-
-
-
-
-
-
-
-
-

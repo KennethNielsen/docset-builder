@@ -3,39 +3,53 @@
 import json
 from distutils.version import StrictVersion
 
-from attrs import define
 import urllib3
+from attrs import evolve
 
+from docset_builder.cache import load_pypi_info, cache_pypi_info
+from docset_builder.data_structures import PyPIInfo
+from docset_builder.overrides import PYPI_OVERRIDES
 
 HTTP = urllib3.PoolManager()
 
 
-@define
-class PyPIInfo:
-    """PyPI information about package"""
-    url: str
-    latest_release: str
-
 def get_information_for_package(package: str) -> PyPIInfo | None:
     """Return information extracted from PyPI"""
+    if pypi_info := load_pypi_info(package_name=package):
+        return pypi_info
+
     response = HTTP.request("GET", f"https://pypi.org/pypi/{package}/json")
     if response.status != 200:
         return None
 
-    data = json.loads(response.data.decode("utf-8"))
-    try:
-        repository_url = data["info"]["project_urls"]["Repository"]
-    except KeyError:
-        return None
+    # Get possible overrides
+    pypi_info = PYPI_OVERRIDES.get(package, PyPIInfo())
 
-    try:
-        releases = tuple(data["releases"].keys())
-    except KeyError:
-        releases = (())
-    sorted_releases = sorted(releases, key=StrictVersion)
-    try:
-        latest_release = sorted_releases[-1]
-    except IndexError:
-        latest_release = None
+    # Extract repository url
+    if pypi_info.repository_url is None:
+        data = json.loads(response.data.decode("utf-8"))
+        try:
+            repository_url = data["info"]["project_urls"]["Repository"]
+        except KeyError:
+            pass
+        else:
+            pypi_info = evolve(pypi_info, repository_url=repository_url)
 
-    return PyPIInfo(url=repository_url, latest_release=latest_release)
+    # Extract latest release
+    if pypi_info.latest_release is None:
+        try:
+            releases = tuple(data["releases"].keys())
+        except KeyError:
+            releases = ()
+        sorted_releases = sorted(releases, key=StrictVersion)
+
+        try:
+            latest_release = sorted_releases[-1]
+        except IndexError:
+            pass
+        else:
+            pypi_info = evolve(pypi_info, latest_release=latest_release)
+
+    cache_pypi_info(package_name=package, pypi_info=pypi_info)
+
+    return pypi_info

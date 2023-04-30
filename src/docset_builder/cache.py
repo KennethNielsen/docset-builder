@@ -5,12 +5,10 @@ from pathlib import Path
 import structlog
 from attrs import define, asdict
 
-from .pypi import get_information_for_package, PyPIInfo
+from .data_structures import PyPIInfo
 from .directories import PYPI_CACHE_DIR
 
 LOG = structlog.get_logger(mod="cache")
-
-
 
 
 @define
@@ -18,23 +16,20 @@ class LocalRepository:
     path: Path
     exists: bool
 
-def get_pypi_info(package_name, _get_from_pypi_function=get_information_for_package) -> PyPIInfo:
+
+def load_pypi_info(package_name) -> PyPIInfo | None:
     """Return PyPi information"""
     cache_path = PYPI_CACHE_DIR / f"{package_name}.json"
     if cache_path.is_file():
         LOG.msg("pypi cache hit", package_name=package_name)
         with open(cache_path) as file_:
             return PyPIInfo(**json.load(file_))
-
-    LOG.msg("pypi cache miss, get from PyPI")
-    pypi_info = _get_from_pypi_function(package_name)
-    if pypi_info:
-        with open(cache_path, "w") as file_:
-            json.dump(asdict(pypi_info), file_)
-
-    return pypi_info
+    LOG.msg("pypi cache miss", package_name=package_name)
 
 
-def get_icon_path_from_url(package_name, url):
-    return url
-
+def cache_pypi_info(package_name: str, pypi_info: PyPIInfo) -> None:
+    """Cache the `pypi_info` for `package_name`"""
+    cache_path = PYPI_CACHE_DIR / f"{package_name}.json"
+    with open(cache_path, "w") as file_:
+        json.dump(asdict(pypi_info), file_)
+    LOG.msg("Cached pypi info", package_name=package_name, pypi_info=pypi_info)
