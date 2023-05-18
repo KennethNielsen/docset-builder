@@ -19,7 +19,7 @@ def install_docset(docset_build_dir: Path) -> None:
     install_dir = install_base_dir / name
 
     if install_dir.exists():
-        LOG.msg("Removes ")
+        LOG.msg("Removed ")
         shutil.rmtree(install_dir)
 
     shutil.move(docset_build_dir, install_base_dir)
