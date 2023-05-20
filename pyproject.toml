@@ -24,6 +24,7 @@ dependencies = [
     "frozendict==2.3.6",
     "structlog==23.1.0",
     "urllib3",
+    "typing-extensions"
 ]
 dynamic = ["version", "readme"]
 
@@ -33,7 +34,7 @@ dev = [
     "ruff==0.0.261",
     "black==23.3.0",
     "mypy==1.2.0",
-    #"pytest==7.2.1",
+    "pytest==7.3.1",
     #"types-requests==2.28.11.8",
     "types-appdirs==1.4.3.1",
     "types-urllib3",

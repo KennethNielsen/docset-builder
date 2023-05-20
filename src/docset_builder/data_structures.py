@@ -1,9 +1,10 @@
 """This module implements shared data structures"""
 from json import dump
 from pathlib import Path
-from typing import Tuple, Mapping
+from typing import Tuple, Mapping, cast, Dict
 
 from attr import frozen, asdict
+from typing_extensions import Self, TypedDict
 
 from docset_builder.directories import REPOSITORIES_DIR
 
@@ -27,6 +28,23 @@ class PyPIInfo:
         with open(dump_file_path, "w") as file_:
             dump(asdict(self), file_, indent=4)
 
+    @classmethod
+    def from_dict(cls, data: Mapping[str, str]) -> Self:
+        """Return a PyPIInfo object from `data`"""
+        return cls(**data)
+
+
+DocBuildInfoDict = TypedDict(
+    "DocBuildInfoDict",
+    {
+        "docdir": str,
+        "deps": list[str],
+        "commands": list[str],
+        "icon_path": str,
+        "start_page": str,
+    },
+)
+
 
 @frozen
 class DocBuildInfo:
@@ -49,3 +67,14 @@ class DocBuildInfo:
         print(self)
         with open(dump_file_path, "w") as file_:
             dump(data, file_, indent=4)
+
+    @classmethod
+    def from_dict(cls, data: DocBuildInfoDict) -> Self:
+        """Return DocBuildInfo from json `data`"""
+        return cls(
+            docdir = Path(data["docdir"]) if data["docdir"] else None,
+            deps = tuple(data["deps"]) if data["deps"] else None,
+            commands = tuple(data["commands"]) if data["commands"] else None,
+            icon_path = Path(data["icon_path"]) if data["icon_path"] else None,
+            start_page = data["start_page"],
+        )

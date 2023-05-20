@@ -1,11 +1,13 @@
 """This module extracts information from PyPI"""
 
 import json
-from distutils.version import StrictVersion
 from pathlib import Path
+from types import ModuleType
+from typing import Protocol
 
 import urllib3
 from attrs import evolve
+from packaging import version
 
 from docset_builder.cache import cache_pypi_info, load_pypi_info
 from docset_builder.data_structures import PyPIInfo
@@ -14,16 +16,32 @@ from docset_builder.overrides import PYPI_OVERRIDES
 HTTP = urllib3.PoolManager()
 
 
+class LoadPyPIInfo(Protocol):
+    """Mypy function signature for load_pypi_info"""
+    def __call__(self, package_name: str) -> PyPIInfo:
+        ...
+
+
+class CachePyPIInfo(Protocol):
+    """Mypy function signature for cache_pypi_info"""
+    def __call__(self, package_name: str, pypi_info: PyPIInfo) -> None:
+        ...
+
+
 def get_information_for_package(
-    package: str, package_test_dump_path: Path | None
+    package: str,
+    package_test_dump_path: Path | None=None,
+    _load_pypi_info: LoadPyPIInfo=load_pypi_info,
+    _cache_pypi_info: CachePyPIInfo=cache_pypi_info,
+    _urllib3: ModuleType=urllib3,
 ) -> PyPIInfo | None:
     """Return information extracted from PyPI"""
     if (
-        pypi_info := load_pypi_info(package_name=package)
+        pypi_info := _load_pypi_info(package_name=package)
     ) and not package_test_dump_path:
         return pypi_info
 
-    response = urllib3.request("GET", f"https://pypi.org/pypi/{package}/json")  # type: ignore
+    response = urllib3.request("GET", f"https://pypi.org/pypi/{package}/json")
     if response.status != 200:
         return None
 
@@ -52,7 +70,7 @@ def get_information_for_package(
             releases = tuple(data["releases"].keys())
         except KeyError:
             releases = ()
-        sorted_releases = sorted(releases, key=StrictVersion)
+        sorted_releases = sorted(releases, key=version.parse)
 
         try:
             latest_release = sorted_releases[-1]
@@ -61,6 +79,7 @@ def get_information_for_package(
         else:
             pypi_info = evolve(pypi_info, latest_release=latest_release)
 
-    cache_pypi_info(package_name=package, pypi_info=pypi_info)
+    _cache_pypi_info(package_name=package, pypi_info=pypi_info)
 
     return pypi_info
+

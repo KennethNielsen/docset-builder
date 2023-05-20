@@ -4,7 +4,7 @@
 - [x] Implement preferentially checking out last tagged release
 - [ ] Implement checkout of specific version
 - [x] Fix docset build to use found index page
-- [ ] Implement tests of information collection
+- [x] Implement tests of information collection
 - [ ] Implement CI with GithubActions
 - [ ] Hide logs behind -v flag
 - [ ] Prettify output with rich

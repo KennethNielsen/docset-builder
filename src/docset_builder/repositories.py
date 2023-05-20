@@ -3,6 +3,7 @@ import re
 import subprocess
 from functools import partial
 from pathlib import Path
+from typing import Callable, cast
 
 import structlog
 from structlog import BoundLogger
@@ -25,9 +26,7 @@ def clone_or_update(name: str, pypi_info: PyPIInfo) -> tuple[Path, str]:
     return repository_dir, checked_out_tag
 
 
-def _clone_repository(
-    repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundLogger
-) -> None:
+def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundLogger) -> None:
     """Clone the repository"""
     _logger.msg("Clone", dir=repository_dir)
     # TODO check out packages for git interaction
@@ -49,15 +48,15 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    check_output = partial(subprocess.check_output, cwd=repository_dir)
+    check_output = cast(
+        Callable[[list[str]], bytes], partial(subprocess.check_output, cwd=repository_dir)
+    )
 
     # Get the name of primary branch
     full_primary_branch_name = check_output(
         ["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
     )
-    primary_branch_name = (
-        full_primary_branch_name.strip().decode("utf-8").split("/")[-1]
-    )
+    primary_branch_name = full_primary_branch_name.strip().decode("utf-8").split("/")[-1]
     _logger.msg("Detected primary branch name", primary_branch_name=primary_branch_name)
     result = silent_run(["git", "checkout", primary_branch_name])
     result.check_returncode()

@@ -1,0 +1,13 @@
+{
+    "docdir": "arrow/docs",
+    "deps": [
+        "-r requirements/requirements-tests.txt",
+        "-r requirements/requirements-docs.txt"
+    ],
+    "commands": [
+        "doc8 index.rst ../README.rst --extension .rst --ignore D001",
+        "make html SPHINXOPTS=\"-W --keep-going\""
+    ],
+    "icon_path": null,
+    "start_page": "index.html"
+}
