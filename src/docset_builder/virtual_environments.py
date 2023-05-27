@@ -8,7 +8,7 @@ import structlog
 from .data_structures import DocBuildInfo
 from .directories import VENV_DIR
 
-LOG = structlog.get_logger(mod="virtual_environments")
+LOG = structlog.get_logger(mod="venvs")
 
 
 def build_docs(
