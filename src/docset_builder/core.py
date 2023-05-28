@@ -52,18 +52,12 @@ def install(
             )
             return
 
-        local_repository_path, checked_out_tag = clone_or_update(
-            package_name, pypi_info=pypi_info
-        )
+        local_repository_path, checked_out_tag = clone_or_update(package_name, pypi_info=pypi_info)
         logger.msg("Local repository dir", dir=local_repository_path)
 
-        docbuild_information = get_docbuild_information(
-            package_name, local_repository_path
-        )
+        docbuild_information = get_docbuild_information(package_name, local_repository_path)
         if test_file_dump_path:
-            docbuild_information.dump_test_file(
-                package_test_dump_path / "docbuild.json"
-            )
+            docbuild_information.dump_test_file(package_test_dump_path / "docbuild.json")
         logger.msg("docbuild information", docbuild_information=docbuild_information)
 
         built_docs_dir = build_docs(

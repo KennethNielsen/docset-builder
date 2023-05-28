@@ -24,11 +24,13 @@ CONFIG_DIR = Path(user_config_dir(APPLICATION_NAME, TEAM_NAME))
 CONFIG_DIR.mkdir(exist_ok=True)
 INSTALLED_DOCSETS_INDEX = CONFIG_DIR / "installed_docsets.json"
 
-def log_cache_dirs():
+
+def log_cache_dirs() -> None:
+    """Log the cache dirs"""
     LOG.msg(
         "cache dirs",
         base=BASE_CACHE_DIR,
         pypi=PYPI_CACHE_DIR,
         repo=REPOSITORIES_DIR,
         venv=VENV_DIR,
-        )
+    )

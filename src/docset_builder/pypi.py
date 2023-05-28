@@ -18,27 +18,27 @@ HTTP = urllib3.PoolManager()
 
 class LoadPyPIInfo(Protocol):
     """Mypy function signature for load_pypi_info"""
-    def __call__(self, package_name: str) -> PyPIInfo:
+
+    def __call__(self, package_name: str) -> PyPIInfo:  # noqa
         ...
 
 
 class CachePyPIInfo(Protocol):
     """Mypy function signature for cache_pypi_info"""
-    def __call__(self, package_name: str, pypi_info: PyPIInfo) -> None:
+
+    def __call__(self, package_name: str, pypi_info: PyPIInfo) -> None:  # noqa
         ...
 
 
 def get_information_for_package(
     package: str,
-    package_test_dump_path: Path | None=None,
-    _load_pypi_info: LoadPyPIInfo=load_pypi_info,
-    _cache_pypi_info: CachePyPIInfo=cache_pypi_info,
-    _urllib3: ModuleType=urllib3,
+    package_test_dump_path: Path | None = None,
+    _load_pypi_info: LoadPyPIInfo = load_pypi_info,
+    _cache_pypi_info: CachePyPIInfo = cache_pypi_info,
+    _urllib3: ModuleType = urllib3,
 ) -> PyPIInfo | None:
     """Return information extracted from PyPI"""
-    if (
-        pypi_info := _load_pypi_info(package_name=package)
-    ) and not package_test_dump_path:
+    if (pypi_info := _load_pypi_info(package_name=package)) and not package_test_dump_path:
         return pypi_info
 
     response = urllib3.request("GET", f"https://pypi.org/pypi/{package}/json")
@@ -52,6 +52,17 @@ def get_information_for_package(
     # Get possible overrides
     pypi_info = PYPI_OVERRIDES.get(package, PyPIInfo())
 
+    pypi_info = extract_information_from_pypi(pypi_info=pypi_info, response=response)
+
+    _cache_pypi_info(package_name=package, pypi_info=pypi_info)
+
+    return pypi_info
+
+
+def extract_information_from_pypi(
+    pypi_info: PyPIInfo, response: urllib3.response.BaseHTTPResponse
+) -> PyPIInfo:
+    """Return new `pypi_info` with information extract from PyPI `reponse`"""
     # Extract repository url
     if pypi_info.repository_url is None:
         data = response.json()
@@ -79,7 +90,4 @@ def get_information_for_package(
         else:
             pypi_info = evolve(pypi_info, latest_release=latest_release)
 
-    _cache_pypi_info(package_name=package, pypi_info=pypi_info)
-
     return pypi_info
-

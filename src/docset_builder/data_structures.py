@@ -1,9 +1,9 @@
 """This module implements shared data structures"""
 from json import dump
 from pathlib import Path
-from typing import Tuple, Mapping, cast, Dict
+from typing import Mapping, Tuple
 
-from attr import frozen, asdict
+from attr import asdict, frozen
 from typing_extensions import Self, TypedDict
 
 from docset_builder.directories import REPOSITORIES_DIR
@@ -72,9 +72,9 @@ class DocBuildInfo:
     def from_dict(cls, data: DocBuildInfoDict) -> Self:
         """Return DocBuildInfo from json `data`"""
         return cls(
-            docdir = Path(data["docdir"]) if data["docdir"] else None,
-            deps = tuple(data["deps"]) if data["deps"] else None,
-            commands = tuple(data["commands"]) if data["commands"] else None,
-            icon_path = Path(data["icon_path"]) if data["icon_path"] else None,
-            start_page = data["start_page"],
+            docdir=Path(data["docdir"]) if data["docdir"] else None,
+            deps=tuple(data["deps"]) if data["deps"] else None,
+            commands=tuple(data["commands"]) if data["commands"] else None,
+            icon_path=Path(data["icon_path"]) if data["icon_path"] else None,
+            start_page=data["start_page"],
         )

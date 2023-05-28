@@ -10,7 +10,6 @@ from .core import install as core_install
 from .directories import log_cache_dirs
 from .logging_configuration import configure
 
-
 configure()
 LOG = structlog.get_logger(mod="main")
 
@@ -21,14 +20,14 @@ def cli() -> None:
     pass
 
 
-def config_verbosity(verbose: bool):
+def config_verbosity(verbose: bool) -> None:
     """Configure loggers according to whether `verbose` is set"""
     if not verbose:
-        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(
-            logging.CRITICAL))
+        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.CRITICAL))
     # This is the one logging that should have happened at module level, but that would
     # defeat the verbosity settings, so instead it is wrapped in a function at called here
     log_cache_dirs()
+
 
 @click.command()
 @click.argument("packages", nargs=-1)
@@ -61,9 +60,7 @@ def install(
         build_only=build_only,
         dump_test_files=dump_test_files_to,
     )
-    core_install(
-        packages, build_only=build_only, test_file_dump_path=dump_test_files_to
-    )
+    core_install(packages, build_only=build_only, test_file_dump_path=dump_test_files_to)
 
 
 cli.add_command(install)

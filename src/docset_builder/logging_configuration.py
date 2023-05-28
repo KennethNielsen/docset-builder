@@ -1,15 +1,21 @@
 """This module configures the logging"""
+from typing import Any, MutableMapping, TypeAlias
 
 import structlog
-from structlog.dev import ConsoleRenderer, YELLOW, RESET_ALL
+from structlog.dev import RESET_ALL, YELLOW, ConsoleRenderer
+
+EventDict: TypeAlias = MutableMapping[str, Any]
+
 
 class ConsoleRendererWithModule(ConsoleRenderer):
-    """ConsoleRenderer that patches the module (given by the 'mod' key in the event_dict)
-    into the log string after the date time
+    """ConsoleRenderer which includes the module in the format
+
+    The module (given by the 'mod' key in the event_dict) and it is placed after the date time
 
     """
 
-    def __call__(self, logger, log_level, event_dict):
+    def __call__(self, logger: structlog.PrintLogger, log_level: str, event_dict: EventDict) -> str:
+        """Return the log string to be displayed"""
         module = event_dict.pop("mod", "")
         original_string = super().__call__(logger, log_level, event_dict)
         # original_string is something like:
@@ -20,7 +26,7 @@ class ConsoleRendererWithModule(ConsoleRenderer):
         return f"{date} {time} {YELLOW}{module: <6}{RESET_ALL} {rest}"
 
 
-def configure():
+def configure() -> None:
     """Configure structlog with a consolere renderer that displays the module"""
     console_renderer_with_module = ConsoleRendererWithModule()
     processors = structlog.get_config()["processors"]
