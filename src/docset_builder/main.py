@@ -20,10 +20,16 @@ def cli() -> None:
     pass
 
 
-def config_verbosity(verbose: bool) -> None:
+def config_verbosity(verbose: bool, very_verbose: bool) -> None:
     """Configure loggers according to whether `verbose` is set"""
-    if not verbose:
-        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.CRITICAL))
+    if very_verbose:
+        level = logging.DEBUG
+    elif verbose:
+        level = logging.INFO
+    else:
+        level = logging.CRITICAL
+    LOG.debug("Set log level", log_level=level)
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(level))
     # This is the one logging that should have happened at module level, but that would
     # defeat the verbosity settings, so instead it is wrapped in a function at called here
     log_cache_dirs()
@@ -49,12 +55,22 @@ def config_verbosity(verbose: bool) -> None:
     default=False,
     is_flag=True,
 )
+@click.option(
+    "-vv",
+    "--very-verbose",
+    default=False,
+    is_flag=True,
+)
 def install(
-    packages: Sequence[str], build_only: bool, dump_test_files_to: Path | None, verbose: bool
+    packages: Sequence[str],
+    build_only: bool,
+    dump_test_files_to: Path | None,
+    verbose: bool,
+    very_verbose: bool,
 ) -> None:
     """Install docsets for one or more `packages`"""
-    config_verbosity(verbose)
-    LOG.msg(
+    config_verbosity(verbose, very_verbose)
+    LOG.info(
         "install",
         packages=packages,
         build_only=build_only,

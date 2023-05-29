@@ -27,7 +27,7 @@ INSTALLED_DOCSETS_INDEX = CONFIG_DIR / "installed_docsets.json"
 
 def log_cache_dirs() -> None:
     """Log the cache dirs"""
-    LOG.msg(
+    LOG.info(
         "cache dirs",
         base=BASE_CACHE_DIR,
         pypi=PYPI_CACHE_DIR,

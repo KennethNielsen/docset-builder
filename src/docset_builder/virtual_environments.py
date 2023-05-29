@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 import structlog
+from click import ClickException
 
 from .data_structures import DocBuildInfo
 from .directories import VENV_DIR
@@ -18,15 +19,15 @@ def build_docs(
     venv_dir = VENV_DIR / package_name
     logger = LOG.bind(venv_dir=venv_dir)
     if not venv_dir.exists():
-        logger.msg("Create virtual env")
+        logger.info("Create virtual env")
         _create_venv(venv_dir)
 
     for requirement in docbuild_information.deps:
-        logger.msg("Install requirement", req=requirement)
+        logger.info("Install requirement", req=requirement)
         _cmd_in_venv(venv_dir, f"pip install --upgrade {requirement}", working_dir=local_repository)
 
     for command in docbuild_information.commands:
-        logger.msg("Exec doc build command", cmd=command)
+        logger.info("Execute doc build command", cmd=command)
         _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.docdir)
 
     return _search_for_built_docs(docbuild_information)
@@ -58,10 +59,11 @@ def _cmd_in_venv(venv_dir: Path, command: str, working_dir: Path | None = None) 
 
 
 def _search_for_built_docs(docbuild_information: DocBuildInfo) -> Path:
-    for option in (("_build", "html"),):
+    candidates = (("_build", "html"),)
+    for option in candidates:
         candidate = docbuild_information.docdir
         for component in option:
             candidate /= component
         if candidate.exists():
             return candidate
-    raise RuntimeError
+    raise ClickException(f"Unable to find dir with built docs amongst candidates: {candidates}")

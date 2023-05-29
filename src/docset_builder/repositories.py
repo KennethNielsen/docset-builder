@@ -16,8 +16,8 @@ LOG = structlog.get_logger(mod="repos")
 
 def clone_or_update(name: str, pypi_info: PyPIInfo) -> tuple[Path, str]:
     """Clone of update the package repository"""
-    logger = LOG.bind(name=name, pypi_info=pypi_info)
-    logger.msg("Clone or update")
+    logger = LOG.bind(name=name)
+    logger.info("Clone and/or update")
 
     repository_dir = REPOSITORIES_DIR / name
     if not repository_dir.exists():
@@ -28,7 +28,7 @@ def clone_or_update(name: str, pypi_info: PyPIInfo) -> tuple[Path, str]:
 
 def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundLogger) -> None:
     """Clone the repository"""
-    _logger.msg("Clone", dir=repository_dir)
+    _logger.info("Clone", dir=repository_dir)
     # TODO check out packages for git interaction
     result = subprocess.run(
         # Do a partial clone, filtering out blobs, to save on initial clone time
@@ -40,14 +40,9 @@ def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundL
 
 def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
     """Update the repository at `repository_dir`"""
-    _logger.msg("Update", repoitory_dir=repository_dir)
+    _logger.info("Update", repoitory_dir=repository_dir)
     run = partial(subprocess.run, cwd=repository_dir)
-    silent_run = partial(
-        subprocess.run,
-        cwd=repository_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    silent_run = partial(run, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     check_output = cast(
         Callable[[list[str]], bytes], partial(subprocess.check_output, cwd=repository_dir)
     )
@@ -56,8 +51,11 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
     full_primary_branch_name = check_output(
         ["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
     )
+    # Example: refs/remotes/origin/main
     primary_branch_name = full_primary_branch_name.strip().decode("utf-8").split("/")[-1]
-    _logger.msg("Detected primary branch name", primary_branch_name=primary_branch_name)
+    _logger.info(
+        "Detected primary branch name, now check it out", primary_branch_name=primary_branch_name
+    )
     result = silent_run(["git", "checkout", primary_branch_name])
     result.check_returncode()
 
@@ -66,15 +64,17 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
     result.check_returncode()
     result = silent_run(["git", "pull", "--ff-only"])
     result.check_returncode()
+    _logger.debug("Primary branch fast forward pulled")
 
     # Check out last release
     tags_raw = check_output(["git", "tag"])
     tags = reversed(tags_raw.decode("utf-8").strip().split())
     for tag in tags:
         if is_version_like(tag, _logger):
+            _logger.debug("Found last release tag, now check it out", tag=tag)
             break
     else:
-        _logger.msg("UNABLE TO FIND RELEASE TAG; PROCEED WITH HEAD")
+        _logger.info("UNABLE TO FIND RELEASE TAG; PROCEED WITH HEAD")
         return "HEAD"
 
     silent_run(["git", "checkout", tag])
@@ -86,7 +86,7 @@ def is_version_like(tag: str, _logger: BoundLogger) -> bool:
     """Return whether `tag` looks like a version"""
     for regular_expression in (r"^v\d.*$", r"^\d*?\.\d*.*?\d*?$"):
         if re.match(regular_expression, tag):
-            _logger.msg("Matched release tag", re=regular_expression, tag=tag)
+            _logger.info("Matched release tag", re=regular_expression, tag=tag)
             return True
     return False
 

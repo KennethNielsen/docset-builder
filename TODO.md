@@ -6,8 +6,11 @@
 - [x] Fix docset build to use found index page
 - [x] Implement tests of information collection
 - [ ] Implement CI with GithubActions
-- [ ] Hide logs behind -v flag
+- [x] Hide logs behind -v flag
 - [ ] Prettify output with rich
+- [ ] Unify abbrev names (e.g. information vs. info)
+- [ ] Change so docsets are built in permanent data dir and linked into install dir
+- [ ] Refuse to install if docset is there, unless --upgrade and the installed docset is ours 
 
 # Longer term objectives
 
@@ -18,5 +21,6 @@
 # Supported package goal list
 
 - [ ] arrow
+- [ ] pytest
 - [ ] attrs
 - [ ] flask
