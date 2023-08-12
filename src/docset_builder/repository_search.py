@@ -47,9 +47,11 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
     doc_section = config_parser[section]
 
     # Update docdir
-    if (changedir := doc_section.get("changedir")) and not docbuild_info.docdir:
+    if (changedir := doc_section.get("changedir")) and not docbuild_info.basedir_for_building_docs:
         logger.debug("Add docdir", docdir=changedir)
-        docbuild_info = evolve(docbuild_info, docdir=tox_ini_path.parent / changedir)
+        docbuild_info = evolve(
+            docbuild_info, basedir_for_building_docs=tox_ini_path.parent / changedir
+        )
 
     # Update dependencies
     if (deps_string := doc_section.get("deps")) and not docbuild_info.deps:

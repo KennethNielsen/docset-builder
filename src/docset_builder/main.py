@@ -61,12 +61,19 @@ def config_verbosity(verbose: bool, very_verbose: bool) -> None:
     default=False,
     is_flag=True,
 )
+@click.option(
+    "-n",
+    "--no-cache",
+    default=False,
+    is_flag=True,
+)
 def install(
     packages: Sequence[str],
     build_only: bool,
     dump_test_files_to: Path | None,
     verbose: bool,
     very_verbose: bool,
+    no_cache: bool,
 ) -> None:
     """Install docsets for one or more `packages`"""
     config_verbosity(verbose, very_verbose)
@@ -75,8 +82,14 @@ def install(
         packages=packages,
         build_only=build_only,
         dump_test_files=dump_test_files_to,
+        no_cache=no_cache,
     )
-    core_install(packages, build_only=build_only, test_file_dump_path=dump_test_files_to)
+    core_install(
+        packages,
+        build_only=build_only,
+        test_file_dump_path=dump_test_files_to,
+        use_cache=not no_cache,
+    )
 
 
 cli.add_command(install)

@@ -36,12 +36,17 @@ class CachePyPIInfo(Protocol):
 def get_information_for_package(
     package: str,
     package_test_dump_path: Path | None = None,
+    use_cache: bool = True,
     _load_pypi_info: LoadPyPIInfo = load_pypi_info,
     _cache_pypi_info: CachePyPIInfo = cache_pypi_info,
     _urllib3: ModuleType = urllib3,
 ) -> PyPIInfo:
     """Return information extracted from PyPI"""
-    if (pypi_info := _load_pypi_info(package_name=package)) and not package_test_dump_path:
+    if (
+        use_cache
+        and (pypi_info := _load_pypi_info(package_name=package))
+        and not package_test_dump_path
+    ):
         LOG.info("Return pypi info from cache", pypi_info=pypi_info)
         return pypi_info
 
@@ -54,7 +59,6 @@ def get_information_for_package(
         )
 
     pypi_info_json = response.json()
-    LOG.info("Get raw PyPI info", pypi_info_json=pypi_info_json)
 
     if package_test_dump_path:
         LOG.debug("Dumped raw PyPI info")
@@ -75,8 +79,9 @@ def get_information_for_package(
 def extract_information_from_pypi(pypi_info: PyPIInfo, pypi_info_json: Dict[str, Any]) -> PyPIInfo:
     """Return new `pypi_info` with information extract from PyPI `response`"""
     # Extract repository url
+    print(pypi_info_json["info"]["project_urls"])
     if pypi_info.repository_url is None:
-        for key in ("Repository",):  # "Source Code"):
+        for key in ("Repository", "Source Code", "Source"):
             try:
                 repository_url = pypi_info_json["info"]["project_urls"][key]
             except KeyError:

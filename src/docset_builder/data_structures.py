@@ -50,9 +50,18 @@ DocBuildInfoDict = TypedDict(
 
 @frozen
 class DocBuildInfo:
-    """Build information"""
+    """Build information
 
-    docdir: Path = None
+    Attributes:
+        basedir_for_building_docs (Path): The directory from which to build the docs
+        deps (tuple[str]): The doc build dependencies
+        commands (tuple[str]): Command that will build the docs
+        icon_path (Path): Path of the project icon
+        start_page (str): The name of the start page within the docbuild folder
+
+    """
+
+    basedir_for_building_docs: Path = None
     deps: tuple[str, ...] = None
     commands: tuple[str, ...] = None
     icon_path: Path = None
@@ -62,13 +71,15 @@ class DocBuildInfo:
         """Return the names of missing pieces of information, if any"""
         # In lieu of class variables https://github.com/python-attrs/attrs/issues/220 we
         # just store the required keys kere
-        necessary_keys = ("docdir", "deps", "commands")
+        necessary_keys = ("basedir_for_building_docs", "deps", "commands")
         return tuple(k for k in necessary_keys if getattr(self, k) is None)
 
     def dump_test_file(self, dump_file_path: Path) -> None:
         """Dump this object to a JSON file for testing purposes"""
         data = asdict(self)
-        data["docdir"] = str(data["docdir"].relative_to(REPOSITORIES_DIR))
+        data["basedir_for_building_docs"] = str(
+            data["basedir_for_building_docs"].relative_to(REPOSITORIES_DIR)
+        )
         print(self)
         with open(dump_file_path, "w") as file_:
             dump(data, file_, indent=4)
@@ -77,7 +88,9 @@ class DocBuildInfo:
     def from_dict(cls, data: DocBuildInfoDict) -> Self:
         """Return DocBuildInfo from json `data`"""
         return cls(
-            docdir=Path(data["docdir"]) if data["docdir"] else None,
+            basedir_for_building_docs=Path(data["basedir_for_building_docs"])
+            if data["basedir_for_building_docs"]
+            else None,
             deps=tuple(data["deps"]) if data["deps"] else None,
             commands=tuple(data["commands"]) if data["commands"] else None,
             icon_path=Path(data["icon_path"]) if data["icon_path"] else None,

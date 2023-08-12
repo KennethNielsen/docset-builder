@@ -1,4 +1,21 @@
-"""Toplevel functions for each of the primary tasks"""
+"""Toplevel functions for each of the primary tasks
+
+The procedure for bulding docsets is the following:
+
+* Get information from PyPI about the package, most importantly the **source code repository
+URL** and the **latest released version**
+* Clone or update a local version of the repository
+* Extract information from configuration files about how to build the docs, this for now
+covers only searching tox.ini, but other configs will be added
+* Build the docs, this consists of
+  * Making a virtual environment for the package, if it does not already exist
+  * Install / upgrade all dependencies for building the docs
+  * Build the docs
+  * Search for the build docs and return the location of the build docs
+* Build the docset from the build docs
+* Install (copy) the docset
+
+"""
 
 import tempfile
 from pathlib import Path
@@ -20,6 +37,7 @@ def install(
     package_names: Sequence[str],
     build_only: bool = False,
     test_file_dump_path: Path | None = None,
+    use_cache: bool = True,
 ) -> None:
     """Install docsets for `packages`"""
     if test_file_dump_path:
@@ -38,7 +56,7 @@ def install(
             package_test_dump_path = None
 
         pypi_info = get_information_for_package(
-            package_name, package_test_dump_path=package_test_dump_path
+            package_name, package_test_dump_path=package_test_dump_path, use_cache=use_cache
         )
         logger.info("Got PyPI info", pypi_info=pypi_info)
         ensure_pypi_info_is_sufficient(package_name=package_name, pypi_info=pypi_info)

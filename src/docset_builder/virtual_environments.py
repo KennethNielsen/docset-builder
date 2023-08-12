@@ -28,7 +28,7 @@ def build_docs(
 
     for command in docbuild_information.commands:
         logger.info("Execute doc build command", cmd=command)
-        _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.docdir)
+        _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.basedir_for_building_docs)
 
     return _search_for_built_docs(docbuild_information)
 
@@ -58,10 +58,11 @@ def _cmd_in_venv(venv_dir: Path, command: str, working_dir: Path | None = None) 
     )
 
 
+# TODO Factor this out into its own file???
 def _search_for_built_docs(docbuild_information: DocBuildInfo) -> Path:
     candidates = (("_build", "html"),)
     for option in candidates:
-        candidate = docbuild_information.docdir
+        candidate = docbuild_information.basedir_for_building_docs
         for component in option:
             candidate /= component
         if candidate.exists():
