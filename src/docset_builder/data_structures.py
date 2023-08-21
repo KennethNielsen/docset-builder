@@ -39,7 +39,7 @@ class PyPIInfo:
 DocBuildInfoDict = TypedDict(
     "DocBuildInfoDict",
     {
-        "docdir": str,
+        "basedir_for_building_docs": str,
         "deps": list[str],
         "commands": list[str],
         "icon_path": str,

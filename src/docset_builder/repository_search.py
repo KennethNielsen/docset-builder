@@ -11,6 +11,28 @@ from docset_builder.data_structures import DocBuildInfo
 from docset_builder.overrides import DOC_BUILD_INFO_OVERRIDES
 
 LOG = structlog.get_logger(mod="reposearch")
+ICON_NAME_CANDIDATES = ("favicon.png",)
+
+
+def _add_icon_file(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBuildInfo:
+    start_paths = [
+        repository_path / p
+        for p in ("doc", "docs")
+        if (repository_path / p).exists() and (repository_path / p).is_dir()
+    ]
+    start_paths.append(repository_path)
+
+    # Break-else-continue-break-else is ugly ass Python for break out of two loops
+    for start_path in start_paths:
+        for file_ in start_path.rglob("*"):
+            if file_.name.lower() in ICON_NAME_CANDIDATES:
+                break
+        else:
+            continue
+        break
+    else:
+        return docbuild_info
+    return evolve(docbuild_info, icon_path=file_)
 
 
 def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
@@ -27,6 +49,7 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     docbuild_info = _add_start_page_info(
         repository_path=repository_path, docbuild_info=docbuild_info
     )
+    docbuild_info = _add_icon_file(repository_path=repository_path, docbuild_info=docbuild_info)
 
     return docbuild_info
 
@@ -36,6 +59,8 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
     logger = LOG.bind(source="tox.ini")
     config_parser = configparser.ConfigParser()
     config_parser.read(tox_ini_path)
+
+    toxinidir = tox_ini_path.parent
 
     # Extract docs section, if any
     for section in config_parser:
@@ -48,20 +73,24 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
 
     # Update docdir
     if (changedir := doc_section.get("changedir")) and not docbuild_info.basedir_for_building_docs:
-        logger.debug("Add docdir", docdir=changedir)
-        docbuild_info = evolve(
-            docbuild_info, basedir_for_building_docs=tox_ini_path.parent / changedir
-        )
+        logger.debug("Add basedir_for_building_docs", docdir=changedir)
+        docbuild_info = evolve(docbuild_info, basedir_for_building_docs=toxinidir / changedir)
+    else:
+        docbuild_info = evolve(docbuild_info, basedir_for_building_docs=toxinidir)
 
     # Update dependencies
-    if (deps_string := doc_section.get("deps")) and not docbuild_info.deps:
-        deps = tuple(deps_string.strip().split("\n"))
+    if not docbuild_info.deps:
+        deps = ("tox",)
         logger.debug("Add deps", deps=deps)
         docbuild_info = evolve(docbuild_info, deps=deps)
 
     # Update build commands
-    if (commands_string := doc_section.get("commands")) and not docbuild_info.commands:
-        commands = tuple(commands_string.strip().split("\n"))
+    if not docbuild_info.commands:
+        if ":" in section:
+            tox_env_name = section.split(":")[1]
+        else:
+            tox_env_name = section
+        commands = (f"tox -e {tox_env_name}",)
         logger.debug("Add commands", commands=commands)
         docbuild_info = evolve(docbuild_info, commands=commands)
 
@@ -78,7 +107,7 @@ def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> 
     all_requirements: tuple[str, ...] = ()
     for requirement in docbuild_info.deps:
         if requirement.startswith("-r") and requirement.endswith(".txt"):
-            requirement_path = repository_path / requirement.removeprefix("-r ")
+            requirement_path = repository_path / requirement.removeprefix("-r")
             for requirement in _requirements_from_file(requirement_path):
                 if requirement not in all_requirements:
                     all_requirements += (requirement,)
