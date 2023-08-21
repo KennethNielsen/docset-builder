@@ -21,10 +21,18 @@ def build_docset(built_docs_dir: Path, docbuild_info: DocBuildInfo, docset_build
     # doc2dash --index-page index.html
     #   ~/.local/share/docset-builder/repositories/arrow/docs/_build/html/
     run_args: tuple[str, ...] = ("doc2dash",)
+
     if docbuild_info.start_page:
         run_args += ("--index-page", docbuild_info.start_page)
     else:
-        LOG.debug("Build without start page")
+        LOG.debug("Built without start page")
+
+    # TODO Downsize icon:
+    if docbuild_info.icon_path:
+        run_args += ("--icon", str(docbuild_info.icon_path))
+    else:
+        LOG.debug("Built without icon")
+
     run_args += (str(built_docs_dir),)
     subprocess.run(run_args, cwd=docset_build_dir)
     for directory in docset_build_dir.iterdir():
