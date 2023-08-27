@@ -79,7 +79,6 @@ def get_information_for_package(
 def extract_information_from_pypi(pypi_info: PyPIInfo, pypi_info_json: Dict[str, Any]) -> PyPIInfo:
     """Return new `pypi_info` with information extract from PyPI `response`"""
     # Extract repository url
-    print(pypi_info_json["info"]["project_urls"])
     if pypi_info.repository_url is None:
         for key in ("Repository", "Source Code", "Source"):
             try:

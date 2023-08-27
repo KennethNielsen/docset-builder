@@ -40,31 +40,18 @@ def install(
     use_cache: bool = True,
 ) -> None:
     """Install docsets for `packages`"""
-    if test_file_dump_path:
-        test_file_dump_path.mkdir(parents=True, exist_ok=True)
-        LOG.debug("Create base dir for test file dump", test_file_dump_path=test_file_dump_path)
-
     for package_name in package_names:
         logger = LOG.bind(package=package_name)
         logger.info("Installing", build_only=build_only, test_file_dump_path=test_file_dump_path)
 
-        if test_file_dump_path:
-            package_test_dump_path = test_file_dump_path / package_name
-            package_test_dump_path.mkdir(exist_ok=True)
-            logger.debug("Created package test file dump dir", dump_dir=package_test_dump_path)
-        else:
-            package_test_dump_path = None
+        # TODO Figure out how to redo the dumping of test files
+        package_test_dump_path = None
 
         pypi_info = get_information_for_package(
             package_name, package_test_dump_path=package_test_dump_path, use_cache=use_cache
         )
         logger.info("Got PyPI info", pypi_info=pypi_info)
         ensure_pypi_info_is_sufficient(package_name=package_name, pypi_info=pypi_info)
-
-        if test_file_dump_path:
-            dump_path = package_test_dump_path / "pypi.json"
-            pypi_info.dump_test_file(dump_path)
-            logger.debug("Dumped PyPI info", dump_path=dump_path)
 
         local_repository_path, checked_out_tag = clone_or_update(package_name, pypi_info=pypi_info)
         logger.info("Cloned and/or updated repo", dir=local_repository_path)
@@ -76,10 +63,6 @@ def install(
         ensure_docbuild_info_is_sufficient(
             package_name=package_name, doc_build_info=docbuild_information
         )
-        if test_file_dump_path:
-            dump_path = package_test_dump_path / "docbuild.json"
-            docbuild_information.dump_test_file(dump_path)
-            logger.debug("DocBuildInfo for tests dumped", dump_path=dump_path)
 
         built_docs_dir = build_docs(
             package_name=package_name,
