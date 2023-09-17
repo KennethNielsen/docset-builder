@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Generator
 
 import structlog
-from attrs import evolve
 from click import ClickException
 
 from docset_builder.data_structures import DocBuildInfo
@@ -32,7 +31,8 @@ def _add_icon_file(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBui
         break
     else:
         return docbuild_info
-    return evolve(docbuild_info, icon_path=file_)
+    docbuild_info.icon_path = file_
+    return docbuild_info
 
 
 def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
@@ -45,6 +45,8 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     if tox_ini_path.exists():
         LOG.debug("Found tox.ini file")
         docbuild_info = _extract_from_tox_ini(docbuild_info, tox_ini_path)
+
+    docbuild_info = _add_all_requirements(docbuild_info, repository_path)
 
     docbuild_info = _add_start_page_info(
         repository_path=repository_path, docbuild_info=docbuild_info
@@ -74,15 +76,15 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
     # Update docdir
     if (changedir := doc_section.get("changedir")) and not docbuild_info.basedir_for_building_docs:
         logger.debug("Add basedir_for_building_docs", docdir=changedir)
-        docbuild_info = evolve(docbuild_info, basedir_for_building_docs=toxinidir / changedir)
+        docbuild_info.basedir_for_building_docs = toxinidir / changedir
     else:
-        docbuild_info = evolve(docbuild_info, basedir_for_building_docs=toxinidir)
+        docbuild_info.basedir_for_building_docs = toxinidir
 
-    # Update dependencies
+    # Update doc build dependencies
     if not docbuild_info.doc_build_command_deps:
         deps = ("tox",)
-        logger.debug("Add deps", deps=deps)
-        docbuild_info = evolve(docbuild_info, deps=deps)
+        logger.debug("Add doc build command deps", deps=deps)
+        docbuild_info.doc_build_command_deps = deps
 
     # Update build commands
     if not docbuild_info.doc_build_commands:
@@ -92,9 +94,22 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
             tox_env_name = section
         commands = (f"tox -e {tox_env_name}",)
         logger.debug("Add commands", commands=commands)
-        docbuild_info = evolve(docbuild_info, commands=commands)
+        docbuild_info.doc_build_commands = commands
 
     return docbuild_info
+
+
+def _add_all_requirements(doc_build_info: DocBuildInfo, repository_path: Path) -> DocBuildInfo:
+    """Add all requirements from requirements files, is requirements are missing"""
+    if doc_build_info.all_deps:
+        return doc_build_info
+
+    all_dependencies = []
+    for file_ in repository_path.rglob("requirements*.txt"):
+        for requirement in _requirements_from_file(file_):
+            all_dependencies.append(requirement)
+    doc_build_info.all_deps = all_dependencies
+    return doc_build_info
 
 
 def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBuildInfo:
@@ -102,26 +117,13 @@ def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> 
     if docbuild_info.start_page:
         return docbuild_info
 
-    # This is a bit of a stretch, but for now simply look for Sphinx in the requirements and
-    # if it is there, assume that the start page is "index.html"
-    all_requirements: tuple[str, ...] = ()
-    for requirement in docbuild_info.doc_build_command_deps:
-        if requirement.startswith("-r") and requirement.endswith(".txt"):
-            requirement_path = repository_path / requirement.removeprefix("-r")
-            for requirement in _requirements_from_file(requirement_path):
-                if requirement not in all_requirements:
-                    all_requirements += (requirement,)
-        else:
-            if requirement not in all_requirements:
-                all_requirements += (requirement,)
-
-    depends_on_sphinx = any("sphinx" in r for r in all_requirements)
+    depends_on_sphinx = any("sphinx" in r for r in docbuild_info.all_deps)
     if depends_on_sphinx:
         LOG.debug(
             "Found sphinx in requirements, assume main page is index.html",
-            all_requirements=all_requirements,
+            all_requirements=docbuild_info.all_deps,
         )
-        docbuild_info = evolve(docbuild_info, start_page="index.html")
+        docbuild_info.start_page = "index.html"
 
     return docbuild_info
 

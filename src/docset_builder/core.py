@@ -65,7 +65,7 @@ def install(
             local_repository=local_repository_path,
             docbuild_information=docbuild_information,
         )
-        logger.info("Docs built", built_docs_dir=built_docs_dir)
+        logger.info("Docs built")
         built_docs_dir = _search_for_built_docs(
             docbuild_information=docbuild_information, local_repository=local_repository_path
         )

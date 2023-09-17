@@ -62,9 +62,11 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
     # Fetch new objects from upstream and update repo
     result = run(["git", "fetch", "origin"])
     result.check_returncode()
-    result = silent_run(["git", "pull", "--ff-only"])
+
+    # Reset at upstream head
+    result = silent_run(["git", "reset", "--hard", f"origin/{primary_branch_name}"])
     result.check_returncode()
-    _logger.debug("Primary branch fast forward pulled")
+    _logger.debug("Primary branch reset at head of upstream primary branch")
 
     # Check out last release
     tags_raw = check_output(["git", "tag"])
