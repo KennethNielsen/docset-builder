@@ -23,13 +23,13 @@ def build_docs(
         logger.info("Create virtual env")
         _create_venv(venv_dir)
 
-    for requirement in docbuild_information.deps:
+    for requirement in docbuild_information.doc_build_command_deps:
         if not (requirement.startswith("-r") and requirement.endswith(".txt")):
             requirement = f'"{requirement}"'
         logger.info("Install requirement", req=requirement)
         _cmd_in_venv(venv_dir, f"pip install --upgrade {requirement}", working_dir=local_repository)
 
-    for command in docbuild_information.commands:
+    for command in docbuild_information.doc_build_commands:
         logger.info("Execute doc build command", cmd=command)
         _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.basedir_for_building_docs)
 

@@ -21,7 +21,6 @@ dependencies = [
     "attrs==22.1.0",
     "click",
     "doc2dash==3.0.0",
-    "frozendict==2.3.6",
     "structlog==23.1.0",
     "urllib3",
     "typing-extensions"

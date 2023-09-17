@@ -79,13 +79,13 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
         docbuild_info = evolve(docbuild_info, basedir_for_building_docs=toxinidir)
 
     # Update dependencies
-    if not docbuild_info.deps:
+    if not docbuild_info.doc_build_command_deps:
         deps = ("tox",)
         logger.debug("Add deps", deps=deps)
         docbuild_info = evolve(docbuild_info, deps=deps)
 
     # Update build commands
-    if not docbuild_info.commands:
+    if not docbuild_info.doc_build_commands:
         if ":" in section:
             tox_env_name = section.split(":")[1]
         else:
@@ -105,7 +105,7 @@ def _add_start_page_info(repository_path: Path, docbuild_info: DocBuildInfo) -> 
     # This is a bit of a stretch, but for now simply look for Sphinx in the requirements and
     # if it is there, assume that the start page is "index.html"
     all_requirements: tuple[str, ...] = ()
-    for requirement in docbuild_info.deps:
+    for requirement in docbuild_info.doc_build_command_deps:
         if requirement.startswith("-r") and requirement.endswith(".txt"):
             requirement_path = repository_path / requirement.removeprefix("-r")
             for requirement in _requirements_from_file(requirement_path):
