@@ -3,15 +3,17 @@ from json import dump
 from pathlib import Path
 from typing import Mapping, Tuple
 
-from attr import asdict, frozen
-from typing_extensions import Self, TypedDict
+from attr import asdict, define
 from click import ClickException
+from typing_extensions import Self, TypedDict
 
 from docset_builder.directories import REPOSITORIES_DIR
+
 
 # FIXME figure out if I can use annotated types to set required fields
 
 
+@define
 class PyPIInfo:
     """PyPI information about package"""
 
@@ -61,7 +63,7 @@ DocBuildInfoDict = TypedDict(
 )
 
 
-@frozen
+@define
 class DocBuildInfo:
     """Build information
 
@@ -79,7 +81,7 @@ class DocBuildInfo:
     basedir_for_building_docs: Path = None
     doc_build_command_deps: list[str, ...] = None
     doc_build_commands: list[str, ...] = None
-    all_deps = list[str, ...] = None
+    all_deps: list[str, ...] = None
     use_icon: bool = False
     icon_path: Path = None
     start_page: str = None

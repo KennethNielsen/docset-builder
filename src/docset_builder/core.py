@@ -25,6 +25,7 @@ import structlog
 
 from .build_docsets import build_docset
 from .docset_library import install_docset
+from .post_build_search import _search_for_built_docs
 from .pypi import get_information_for_package
 from .repositories import clone_or_update
 from .repository_search import ensure_docbuild_info_is_sufficient, get_docbuild_information
@@ -59,12 +60,16 @@ def install(
             package_name=package_name, doc_build_info=docbuild_information
         )
 
-        built_docs_dir = build_docs(
+        build_docs(
             package_name=package_name,
             local_repository=local_repository_path,
             docbuild_information=docbuild_information,
         )
         logger.info("Docs built", built_docs_dir=built_docs_dir)
+        built_docs_dir = _search_for_built_docs(
+            docbuild_information=docbuild_information, local_repository=local_repository_path
+        )
+        logger.info("Docs located", path=built_docs_dir)
 
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             tmp_dir = Path(tmp_dir_name)

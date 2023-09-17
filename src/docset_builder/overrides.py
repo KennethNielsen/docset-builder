@@ -7,7 +7,7 @@ from docset_builder.data_structures import DocBuildInfo, PyPIInfo
 PYPI_OVERRIDES: Mapping[str, PyPIInfo] = {}
 DOC_BUILD_INFO_OVERRIDES: Mapping[str, DocBuildInfo] = {
     # arrow has a unicode char as their icon as part of the name
-    "arrow": DocBuildInfo(use_ifon=Fals),
+    "arrow": DocBuildInfo(use_icon=False),
 }
 
 # Note: No idea why mypy complains about the lines above

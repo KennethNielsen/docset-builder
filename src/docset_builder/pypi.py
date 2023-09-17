@@ -38,7 +38,7 @@ def get_information_for_package(
     _urllib3: ModuleType = urllib3,
 ) -> PyPIInfo:
     """Return information extracted from PyPI"""
-    if use_cache(pypi_info := _load_pypi_info(package_name=package_name)):
+    if use_cache and (pypi_info := _load_pypi_info(package_name=package_name)):
         LOG.info("Return pypi info from cache", pypi_info=pypi_info)
         return pypi_info
 
