@@ -19,7 +19,7 @@ covers only searching tox.ini, but other configs will be added
 
 import tempfile
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Optional
 
 import structlog
 
@@ -37,7 +37,7 @@ LOG = structlog.get_logger(mod="core")
 def install(
     package_names: Sequence[str],
     build_only: bool = False,
-    test_file_dump_path: Path | None = None,
+    test_file_dump_path: Optional[Path] = None,
     use_cache: bool = True,
 ) -> None:
     """Install docsets for `packages`"""

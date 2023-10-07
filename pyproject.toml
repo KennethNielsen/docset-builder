@@ -15,15 +15,16 @@ authors = [
     {name = "Kenneth Nielsen", email = "k.nielsen81@gmail.com"},
 ]
 description = "Build docsets from source"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = [
     "appdirs==1.4.4",
     "attrs==22.1.0",
     "click",
     "doc2dash==3.0.0",
+    "packaging==23.2",
     "structlog==23.1.0",
     "urllib3",
-    "typing-extensions"
+    "typing-extensions==4.8.0"
 ]
 dynamic = ["version", "readme"]
 

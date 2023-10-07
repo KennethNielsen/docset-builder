@@ -1,5 +1,6 @@
 """Cache implementation"""
 import json
+from typing import Optional
 
 import structlog
 from attrs import asdict
@@ -10,7 +11,7 @@ from .directories import PYPI_CACHE_DIR
 LOG = structlog.get_logger(mod="cache")
 
 
-def load_pypi_info(package_name: str) -> PyPIInfo | None:
+def load_pypi_info(package_name: str) -> Optional[PyPIInfo]:
     """Return PyPi information"""
     cache_path = PYPI_CACHE_DIR / f"{package_name}.json"
     if cache_path.is_file():

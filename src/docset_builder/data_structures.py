@@ -1,7 +1,7 @@
 """This module implements shared data structures"""
 from json import dump
 from pathlib import Path
-from typing import Mapping, Tuple
+from typing import Mapping, Tuple, Optional
 
 from attr import asdict, define
 from click import ClickException
@@ -17,9 +17,9 @@ from docset_builder.directories import REPOSITORIES_DIR
 class PyPIInfo:
     """PyPI information about package"""
 
-    package_name: str | None = None
-    repository_url: str | None = None
-    latest_release: str | None = None
+    package_name: Optional[str] = None
+    repository_url: Optional[str] = None
+    latest_release: Optional[str] = None
 
     def missing_information_keys(self) -> Tuple[str, ...]:
         """Return the names of missing pieces of information, if any"""

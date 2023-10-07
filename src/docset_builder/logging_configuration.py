@@ -1,8 +1,10 @@
 """This module configures the logging"""
-from typing import Any, MutableMapping, TypeAlias
+from typing import Any, MutableMapping
 
 import structlog
 from structlog.dev import RESET_ALL, YELLOW, ConsoleRenderer
+
+from .compat import TypeAlias
 
 EventDict: TypeAlias = MutableMapping[str, Any]
 

@@ -1,7 +1,7 @@
 """This module implements the main cli interface"""
 import logging
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Optional
 
 import click
 import structlog
@@ -70,7 +70,7 @@ def config_verbosity(verbose: bool, very_verbose: bool) -> None:
 def install(
     packages: Sequence[str],
     build_only: bool,
-    dump_test_files_to: Path | None,
+    dump_test_files_to: Optional[Path],
     verbose: bool,
     very_verbose: bool,
     no_cache: bool,

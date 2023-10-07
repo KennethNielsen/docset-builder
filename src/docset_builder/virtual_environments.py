@@ -2,6 +2,7 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import structlog
 
@@ -37,7 +38,9 @@ def build_docs(
 def _create_venv(venv_dir: Path) -> None:
     """Create virtual environments in `venv_dir`"""
     subprocess.check_call(
-        f"/usr/bin/env python3 -m venv {venv_dir}",
+        # Important, for maximum compatibility, this has to point to a cPython, not merely
+        # /usr/bin/env python3 which will point to pypy3 if installed
+        f"/usr/bin/python3 -m venv {venv_dir}",
         stderr=subprocess.PIPE,
         universal_newlines=True,
         shell=True,
@@ -46,7 +49,7 @@ def _create_venv(venv_dir: Path) -> None:
     )
 
 
-def _cmd_in_venv(venv_dir: Path, command: str, working_dir: Path | None = None) -> None:
+def _cmd_in_venv(venv_dir: Path, command: str, working_dir: Optional[Path] = None) -> None:
     activate = venv_dir / "bin" / "activate"
     subprocess.check_call(
         f"source {activate} && {command}",
