@@ -4,7 +4,6 @@ attrs
 flask
 requests
 pyserial
-appdirs
 numpy
 psutil
 cx_Freeze

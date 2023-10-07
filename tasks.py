@@ -253,3 +253,12 @@ def coverage(context, show_missing=False):
         report_type = "term"
     with context.cd(THIS_DIR):
         context.run(f"pytest --cov-report {report_type} --cov=src/zilien_qt/ tests/")
+
+
+@task
+def itch(context):
+    """Build the docsets for the projects in the my-own-itch-list.txt file"""
+    with context.cd(THIS_DIR):
+        with open("my-own-itch-list.txt") as file_:
+            for application in file_:
+                context.run(f"python -m docset_builder.main install -n -b {application}")

@@ -28,7 +28,7 @@ To start with, the packages in the "my-own-itch-list.txt".
 - [ ] flask
 - [ ] requests
 - [ ] pyserial
-- [ ] appdirs
+- [ ] appdirs, NO has no docs
 - [ ] numpy
 - [ ] psutil
 - [ ] cx_Freeze
@@ -40,3 +40,5 @@ To start with, the packages in the "my-own-itch-list.txt".
 - [ ] pyyaml
 - [ ] black
 - [ ] ruff
+
+Then proceed with pypi top 100.
