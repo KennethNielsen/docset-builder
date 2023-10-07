@@ -20,7 +20,23 @@
 
 # Supported package goal list
 
+To start with, the packages in the "my-own-itch-list.txt".
+
 - [ ] arrow
 - [ ] pytest
 - [ ] attrs
 - [ ] flask
+- [ ] requests
+- [ ] pyserial
+- [ ] appdirs
+- [ ] numpy
+- [ ] psutil
+- [ ] cx_Freeze
+- [ ] invoke
+- [ ] toml
+- [ ] pathvalidate
+- [ ] pyqtgraph
+- [ ] rich
+- [ ] pyyaml
+- [ ] black
+- [ ] ruff
