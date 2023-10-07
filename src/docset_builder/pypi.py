@@ -1,5 +1,6 @@
 """This module extracts information from PyPI"""
 
+import re
 from types import ModuleType
 from typing import Any, Dict, Protocol
 
@@ -15,6 +16,8 @@ from docset_builder.overrides import PYPI_OVERRIDES
 LOG = structlog.get_logger(mod="pypi")
 HTTP = urllib3.PoolManager()
 
+
+GITHUB_PROJECT_URL = r"^https:\/\/github\.com\/\w*?\/\w*?$"
 
 class LoadPyPIInfo(Protocol):
     """Mypy function signature for load_pypi_info"""
@@ -64,6 +67,12 @@ def get_information_for_package(
     return pypi_info
 
 
+def is_repository_url(repository_url: str) -> bool:
+    """Check whether a URL is a git cloneable link"""
+    # As a quick hack, for now, just check if the URL has the structure of a GitHub project
+    return re.match(GITHUB_PROJECT_URL, repository_url) is not None
+
+
 def extract_information_from_pypi(pypi_info: PyPIInfo, pypi_info_json: Dict[str, Any]) -> PyPIInfo:
     """Return new `pypi_info` with information extract from PyPI `response`"""
     # Extract repository url
@@ -72,8 +81,20 @@ def extract_information_from_pypi(pypi_info: PyPIInfo, pypi_info_json: Dict[str,
             try:
                 repository_url = pypi_info_json["info"]["project_urls"][key]
             except KeyError:
-                pass
-            else:
+                continue
+
+            pypi_info.repository_url = repository_url
+            LOG.debug("Added repository url", key=key, repository_url=repository_url)
+            break
+
+    if pypi_info.repository_url is None:
+        for key in ("Homepage",):
+            try:
+                repository_url = pypi_info_json["info"]["project_urls"][key]
+            except KeyError:
+                continue
+
+            if is_repository_url(repository_url):
                 pypi_info.repository_url = repository_url
                 LOG.debug("Added repository url", key=key, repository_url=repository_url)
                 break
