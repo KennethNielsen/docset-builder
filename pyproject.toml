@@ -24,6 +24,7 @@ dependencies = [
     "packaging==23.2",
     "structlog==23.1.0",
     "urllib3",
+    "toml==0.10.2",
     "typing-extensions==4.8.0"
 ]
 dynamic = ["version", "readme"]

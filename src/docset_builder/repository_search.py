@@ -1,9 +1,11 @@
 """This module implements searching the repository for doc build information"""
 import configparser
+import itertools
 from pathlib import Path
 from typing import Generator
 
 import structlog
+import toml
 from click import ClickException
 
 from docset_builder.data_structures import DocBuildInfo
@@ -105,9 +107,29 @@ def _add_all_requirements(doc_build_info: DocBuildInfo, repository_path: Path) -
         return doc_build_info
 
     all_dependencies = []
-    for file_ in repository_path.rglob("requirements*.txt"):
+    all_requirements_files = itertools.chain(
+        repository_path.rglob("requirements*.txt"),
+        (repository_path / "requirements").glob("*.txt"),
+    )
+    for file_ in all_requirements_files:
         for requirement in _requirements_from_file(file_):
             all_dependencies.append(requirement)
+
+    if (pyproject_path := repository_path / "pyproject.toml").exists():
+        with open(pyproject_path) as file_:
+            pyproject = toml.load(file_)
+        try:
+            all_dependencies += pyproject["project"]["dependencies"]
+        except KeyError:
+            pass
+
+        try:
+            for section_name, dependencies in pyproject["project"]["optional-dependencies"].items():
+                all_dependencies += dependencies
+        except KeyError:
+            pass
+
+
     doc_build_info.all_deps = all_dependencies
     return doc_build_info
 
