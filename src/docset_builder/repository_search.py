@@ -8,8 +8,9 @@ import structlog
 import toml
 from click import ClickException
 
-from docset_builder.data_structures import DocBuildInfo
-from docset_builder.overrides import DOC_BUILD_INFO_OVERRIDES
+from .data_structures import DocBuildInfo
+from .overrides import DOC_BUILD_INFO_OVERRIDES
+from .utils import extract_sections_from_makefile
 
 LOG = structlog.get_logger(mod="reposearch")
 ICON_NAME_CANDIDATES = ("favicon.png",)
@@ -43,10 +44,19 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     docbuild_info = DOC_BUILD_INFO_OVERRIDES.get(name, DocBuildInfo())
     LOG.debug("Got overrides", docbuild_info=docbuild_info)
 
+    found_good = False
+
     tox_ini_path = repository_path / "tox.ini"
     if tox_ini_path.exists():
+        found_good = True
         LOG.debug("Found tox.ini file")
         docbuild_info = _extract_from_tox_ini(docbuild_info, tox_ini_path)
+
+    make_file_path = repository_path / "Makefile"
+    if make_file_path.exists() and not found_good:
+        LOG.debug("Found Makefile")
+        docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
+
 
     docbuild_info = _add_all_requirements(docbuild_info, repository_path)
 
@@ -54,6 +64,9 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
         repository_path=repository_path, docbuild_info=docbuild_info
     )
     docbuild_info = _add_icon_file(repository_path=repository_path, docbuild_info=docbuild_info)
+
+    # docbuild_info = _look_for_docs_dir(repository_path=repository_path,
+    # docbuild_info=docbuild_info)
 
     return docbuild_info
 
@@ -97,6 +110,31 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
         commands = (f"tox -e {tox_env_name}",)
         logger.debug("Add commands", commands=commands)
         docbuild_info.doc_build_commands = commands
+
+    if docbuild_info.doc_build_command_deps == ["SHOULD_BE_ALL"]:
+        docbuild_info.doc_build_command_deps = docbuild_info.all_deps
+
+    return docbuild_info
+
+def _extract_from_makefile(docbuild_info, make_file_path, repository_path):
+    logger = LOG.bind(source="Makefile")
+    sections = extract_sections_from_makefile(make_file_path)
+    commands = []
+    for section_name in ("docs-init", "docs"):
+        commands += sections.get(section_name, [])
+
+    # Update doc build dependencies
+    if docbuild_info.doc_build_commands is None:
+        logger.debug("Add doc build commands", commands=commands)
+        docbuild_info.doc_build_commands = commands
+
+    if docbuild_info.doc_build_command_deps is None:
+        logger.debug("Set docbuild command deps to no deps")
+        docbuild_info.doc_build_command_deps = ["SHOULD_BE_ALL"]
+
+    if docbuild_info.basedir_for_building_docs is None:
+        logger.debug("Add basedir for building docs", basedir_for_building_docs=repository_path)
+        docbuild_info.basedir_for_building_docs = repository_path
 
     return docbuild_info
 
@@ -177,3 +215,30 @@ def ensure_docbuild_info_is_sufficient(package_name: str, doc_build_info: DocBui
             f"for this module: {package_name}"
         )
         raise ClickException(error_message)
+
+
+def _look_for_docs_dir(repository_path, docbuild_info):
+    """Look for a "docs" dir and add information from that"""
+    if not docbuild_info.missing_information_keys():
+        return docbuild_info
+
+    LOG.error("UGLY docs dir FALLBACK")
+
+    for docdir_name in ("docs", "doc", "documentation"):
+        if not (docdir_path := repository_path / docdir_name).exists():
+            continue
+
+        if not all((docdir_path / filename).exists() for filename in ("conf.py", "Makefile")):
+            continue
+
+        with open(docdir_path / "Makefile") as file_:
+            if "sphinx" not in file_.read():
+                continue
+
+        docbuild_info.basedir_for_building_docs = docdir_path
+        docbuild_info.doc_build_command_deps = docbuild_info.all_deps
+        docbuild_info.doc_build_commands = ["make html"]
+
+    return docbuild_info
+
+
