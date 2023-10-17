@@ -37,6 +37,7 @@ def _add_icon_file(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBui
     return docbuild_info
 
 
+
 def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     """Return docbuild information"""
     LOG.info("Get docbuild information", name=name, repository_path=repository_path)
@@ -55,6 +56,9 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     if make_file_path.exists() and docbuild_info.missing_information_keys():
         LOG.debug("Found Makefile")
         docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
+
+    if docbuild_info.missing_information_keys():
+        docbuild_info = _look_for_spin_tool(docbuild_info, repository_path)
 
     docbuild_info = _add_start_page_info(
         repository_path=repository_path, docbuild_info=docbuild_info
@@ -109,6 +113,35 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
 
     return docbuild_info
 
+
+def _look_for_spin_tool(docbuild_info: DocBuildInfo, repository_path: Path) -> DocBuildInfo:
+    """Check if the `spin` tool is used"""
+    logger = LOG.bind(source="spin tool")
+    for requirement in docbuild_info.all_deps:
+        for operator in ("===", "~=", "==", "!=", "<=", ">=", "<", ">"):
+            if operator in requirement:
+                name, _ = requirement.split(operator)
+                break
+        else:
+            name = requirement
+        if name.strip() == "spin":
+            break
+    else:
+        return docbuild_info
+
+    if docbuild_info.doc_build_command_deps is None:
+        logger.debug("Set docbuild command deps to all")
+        docbuild_info.doc_build_command_deps = docbuild_info.all_deps
+
+    commands = ["spin docs"]
+    if docbuild_info.doc_build_commands is None:
+        logger.debug("Add doc build commands", commands=commands)
+        docbuild_info.doc_build_commands = commands
+
+    if docbuild_info.basedir_for_building_docs is None:
+        docbuild_info.basedir_for_building_docs = repository_path
+
+    return docbuild_info
 
 def _extract_from_makefile(
     docbuild_info: DocBuildInfo, make_file_path: Path, repository_path: Path
