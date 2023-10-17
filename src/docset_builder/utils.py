@@ -5,7 +5,7 @@ from pathlib import Path
 
 from attr import Factory, define
 
-MAKEFILE_SECTION_HEADER = re.compile(r"^([\w-]*):([\w ]*)$")
+MAKEFILE_SECTIONS = r"([\.\w -]*): *(.*)?((?:\n\t.*)*)?"
 
 
 @define
@@ -16,31 +16,20 @@ class _Section:
 
 
 def extract_sections_from_makefile(makefile_path: Path) -> dict[str, list[str]]:  # noqa: C901
-    """Extract command sections from makefile at `makefile_path`"""
-    # This is obviously sub-optimal, but I didn't find a tool that seemed well-used and
-    # maintained at first glace
+    """Extract sections from makefile and resolve dependencies"""
     with open(makefile_path) as file_:
-        sections = {}
-        current_section = None
-        for line in file_:
-            if line.strip() == "":
-                continue
+        makefile_content = file_.read()
 
-            if header_match := MAKEFILE_SECTION_HEADER.match(line):
-                if current_section is not None:
-                    sections[current_section.name] = current_section
+    sections = {}
+    for match in re.findall(MAKEFILE_SECTIONS, makefile_content):
+        name_group, deps_str, lines = match
+        if lines == "":
+            deps_str, lines = lines, deps_str
+        lines = [line.strip() for line in lines.strip().split("\n")]
+        deps = deps_str.split(" ") if deps_str else []
 
-                name, deps_str = header_match.groups()
-                if deps_str.strip() != "":
-                    deps = deps_str.strip().split(" ")
-                else:
-                    deps = []
-                current_section = _Section(name, deps)
-            else:
-                if current_section:
-                    current_section.lines.append(line.strip())
-        if current_section:
-            sections[current_section.name] = current_section
+        for name in re.findall(r"[\.\w-]+", name_group.strip()):
+            sections[name] = _Section(name, deps, lines)
 
     # Resolve dependencies
     while True:

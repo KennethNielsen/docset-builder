@@ -44,20 +44,17 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     docbuild_info.package_name = name
     LOG.debug("Got overrides", docbuild_info=docbuild_info)
 
-    found_good = False
+    docbuild_info = _add_all_requirements(docbuild_info, repository_path)
 
     tox_ini_path = repository_path / "tox.ini"
     if tox_ini_path.exists():
-        found_good = True
         LOG.debug("Found tox.ini file")
         docbuild_info = _extract_from_tox_ini(docbuild_info, tox_ini_path)
 
     make_file_path = repository_path / "Makefile"
-    if make_file_path.exists() and not found_good:
+    if make_file_path.exists() and docbuild_info.missing_information_keys():
         LOG.debug("Found Makefile")
         docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
-
-    docbuild_info = _add_all_requirements(docbuild_info, repository_path)
 
     docbuild_info = _add_start_page_info(
         repository_path=repository_path, docbuild_info=docbuild_info
@@ -110,9 +107,6 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
         logger.debug("Add commands", commands=commands)
         docbuild_info.doc_build_commands = commands
 
-    if docbuild_info.doc_build_command_deps == ["SHOULD_BE_ALL"]:
-        docbuild_info.doc_build_command_deps = docbuild_info.all_deps
-
     return docbuild_info
 
 
@@ -132,7 +126,7 @@ def _extract_from_makefile(
 
     if docbuild_info.doc_build_command_deps is None:
         logger.debug("Set docbuild command deps to no deps")
-        docbuild_info.doc_build_command_deps = ["SHOULD_BE_ALL"]
+        docbuild_info.doc_build_command_deps = docbuild_info.all_deps
 
     if docbuild_info.basedir_for_building_docs is None:
         logger.debug("Add basedir for building docs", basedir_for_building_docs=repository_path)
