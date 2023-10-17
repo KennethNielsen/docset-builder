@@ -142,7 +142,7 @@ def _add_all_requirements(doc_build_info: DocBuildInfo, repository_path: Path) -
 
     all_dependencies = []
     all_requirements_files = itertools.chain(
-        repository_path.rglob("requirements*.txt"),
+        repository_path.rglob("*requirements*.txt"),
         (repository_path / "requirements").glob("*.txt"),
     )
     for file_path in all_requirements_files:
@@ -188,7 +188,9 @@ def _requirements_from_file(requirement_path: Path) -> Generator[str, None, None
     try:
         with open(requirement_path) as file_:
             for requirement in (r.strip() for r in file_.readlines()):
-                if requirement.startswith("-r") and requirement.endswith(".txt"):
+                if requirement.startswith("#") or requirement == "":
+                    continue
+                elif requirement.startswith("-r") and requirement.endswith(".txt"):
                     yield from _requirements_from_file(
                         requirement_path.parent / requirement.removeprefix("-r ")
                     )
