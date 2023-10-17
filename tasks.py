@@ -261,4 +261,7 @@ def itch(context):
     with context.cd(THIS_DIR):
         with open("my-own-itch-list.txt") as file_:
             for application in file_:
-                context.run(f"python -m docset_builder.main install -n -b {application}")
+                if application.startswith("#"):
+                    continue
+                print(f"\n\n# Try and build {application}")
+                ret = context.run(f"python -m docset_builder.main install -n -b {application}")
