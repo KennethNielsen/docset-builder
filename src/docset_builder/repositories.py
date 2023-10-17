@@ -32,7 +32,10 @@ def _clone_repository(repository_dir: Path, pypi_info: PyPIInfo, _logger: BoundL
     # TODO check out packages for git interaction
     result = subprocess.run(
         # Do a partial clone, filtering out blobs, to save on initial clone time
-        ["git", "clone", "--filter=blob:none", pypi_info.repository_url],
+        # NOTE: Support for partial clones of submodules seems scetchy at present:
+        # https://stackoverflow.com/questions/2144406/how-to-make-shallow-git-submodules/47374702#47374702
+        # so for now, don't do them
+        ["git", "clone", "--recurse-submodules", "--filter=blob:none", pypi_info.repository_url],
         cwd=repository_dir.parent,
     )
     result.check_returncode()
@@ -68,6 +71,11 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
     result.check_returncode()
     _logger.debug("Primary branch reset at head of upstream primary branch")
 
+    # submodules = check_output("git submodule")
+    # print(repr(submodules))
+    result = silent_run(["git", "submodule", "update"])
+    result.check_returncode()
+
     # Check out last release
     tags_raw = check_output(["git", "tag"])
     tags = reversed(tags_raw.decode("utf-8").strip().split())
@@ -79,7 +87,10 @@ def update_repository(repository_dir: Path, _logger: BoundLogger) -> str:
         _logger.info("UNABLE TO FIND RELEASE TAG; PROCEED WITH HEAD")
         return "HEAD"
 
-    silent_run(["git", "checkout", tag])
+    result = silent_run(["git", "checkout", tag])
+    result.check_returncode()
+    result = silent_run(["git", "submodule", "update"])
+    result.check_returncode()
 
     return tag
 
