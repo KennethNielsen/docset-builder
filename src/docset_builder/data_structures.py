@@ -79,9 +79,9 @@ class DocBuildInfo:
 
     package_name: str = None
     basedir_for_building_docs: Path = None
-    doc_build_command_deps: list[str, ...] = None
-    doc_build_commands: list[str, ...] = None
-    all_deps: list[str, ...] = None
+    doc_build_command_deps: list[str] = None
+    doc_build_commands: list[str] = None
+    all_deps: list[str] = None
     use_icon: bool = False
     icon_path: Path = None
     start_page: str = None

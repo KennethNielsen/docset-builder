@@ -152,9 +152,9 @@ def dependencies(context):
     with context.cd(THIS_DIR):
         context.run("python -m pip install --upgrade pip")
         data = toml.load(THIS_DIR / "pyproject.toml")
-        context.run(f"pip install {' '.join(data['project']['dependencies'])}")
+        context.run(f"pip install --upgrade {' '.join(data['project']['dependencies'])}")
         context.run(
-            "pip install "
+            "pip install --upgrade "
             f"{' '.join(data['project']['optional-dependencies']['dev'])}"
         )
 

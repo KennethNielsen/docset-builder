@@ -14,7 +14,7 @@ LOG = structlog.get_logger(mod="venvs")
 
 def build_docs(
     package_name: str, local_repository: Path, docbuild_information: DocBuildInfo
-) -> Path:
+) -> None:
     """Build the docs"""
     venv_dir = VENV_DIR / package_name
     logger = LOG.bind(venv_dir=venv_dir)
@@ -31,8 +31,6 @@ def build_docs(
     for command in docbuild_information.doc_build_commands:
         logger.info("Execute doc build command", cmd=command)
         _cmd_in_venv(venv_dir, command, working_dir=docbuild_information.basedir_for_building_docs)
-
-    return
 
 
 def _create_venv(venv_dir: Path) -> None:

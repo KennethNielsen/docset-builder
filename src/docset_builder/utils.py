@@ -11,11 +11,11 @@ MAKEFILE_SECTION_HEADER = re.compile(r"^([\w-]*):([\w ]*)$")
 @define
 class _Section:
     name: str
-    deps: list
+    deps: list[str]
     lines: list[str] = Factory(list)
 
 
-def extract_sections_from_makefile(makefile_path: Path):  # noqa: C901
+def extract_sections_from_makefile(makefile_path: Path) -> dict[str, list[str]]:  # noqa: C901
     """Extract command sections from makefile at `makefile_path`"""
     # This is obviously sub-optimal, but I didn't find a tool that seemed well-used and
     # maintained at first glace

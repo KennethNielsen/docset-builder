@@ -96,7 +96,7 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
 
     # Update doc build dependencies
     if not docbuild_info.doc_build_command_deps:
-        deps = ("tox",)
+        deps = ["tox"]
         logger.debug("Add doc build command deps", deps=deps)
         docbuild_info.doc_build_command_deps = deps
 
@@ -106,7 +106,7 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
             tox_env_name = section.split(":")[1]
         else:
             tox_env_name = section
-        commands = (f"tox -e {tox_env_name}",)
+        commands = [f"tox -e {tox_env_name}"]
         logger.debug("Add commands", commands=commands)
         docbuild_info.doc_build_commands = commands
 
@@ -116,7 +116,9 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
     return docbuild_info
 
 
-def _extract_from_makefile(docbuild_info, make_file_path, repository_path):
+def _extract_from_makefile(
+    docbuild_info: DocBuildInfo, make_file_path: Path, repository_path: Path
+) -> DocBuildInfo:
     logger = LOG.bind(source="Makefile")
     sections = extract_sections_from_makefile(make_file_path)
     commands = []
@@ -149,8 +151,8 @@ def _add_all_requirements(doc_build_info: DocBuildInfo, repository_path: Path) -
         repository_path.rglob("requirements*.txt"),
         (repository_path / "requirements").glob("*.txt"),
     )
-    for file_ in all_requirements_files:
-        for requirement in _requirements_from_file(file_):
+    for file_path in all_requirements_files:
+        for requirement in _requirements_from_file(file_path):
             all_dependencies.append(requirement)
 
     if (pyproject_path := repository_path / "pyproject.toml").exists():
@@ -203,7 +205,7 @@ def _requirements_from_file(requirement_path: Path) -> Generator[str, None, None
         LOG.error("UNABLE TO READ REQUIREMENTS FROM FILE", requirement_path=requirement_path)
 
 
-def _look_for_docs_dir(repository_path, docbuild_info):
+def _look_for_docs_dir(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBuildInfo:
     """Look for a "docs" dir and add information from that"""
     if not docbuild_info.missing_information_keys():
         return docbuild_info
