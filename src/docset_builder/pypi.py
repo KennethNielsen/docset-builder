@@ -19,6 +19,7 @@ HTTP = urllib3.PoolManager()
 
 GITHUB_PROJECT_URL = r"^https:\/\/github\.com\/\w*?\/\w*?$"
 
+
 class LoadPyPIInfo(Protocol):
     """Mypy function signature for load_pypi_info"""
 
@@ -77,27 +78,18 @@ def extract_information_from_pypi(pypi_info: PyPIInfo, pypi_info_json: Dict[str,
     """Return new `pypi_info` with information extract from PyPI `response`"""
     # Extract repository url
     if pypi_info.repository_url is None:
-        for key in ("Repository", "Source Code", "Source"):
+        for key in ("Repository", "Source Code", "Source", "Homepage"):
             try:
                 repository_url = pypi_info_json["info"]["project_urls"][key]
             except KeyError:
+                continue
+
+            if key == "Homepage" and not is_repository_url(repository_url):
                 continue
 
             pypi_info.repository_url = repository_url
             LOG.debug("Added repository url", key=key, repository_url=repository_url)
             break
-
-    if pypi_info.repository_url is None:
-        for key in ("Homepage",):
-            try:
-                repository_url = pypi_info_json["info"]["project_urls"][key]
-            except KeyError:
-                continue
-
-            if is_repository_url(repository_url):
-                pypi_info.repository_url = repository_url
-                LOG.debug("Added repository url", key=key, repository_url=repository_url)
-                break
 
     # Extract latest release
     if pypi_info.latest_release is None:

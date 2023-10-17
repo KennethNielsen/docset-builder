@@ -1,14 +1,13 @@
 """This module implements shared data structures"""
 from json import dump
 from pathlib import Path
-from typing import Mapping, Tuple, Optional
+from typing import Mapping, Optional, Tuple
 
 from attr import asdict, define
 from click import ClickException
 from typing_extensions import Self, TypedDict
 
 from docset_builder.directories import REPOSITORIES_DIR
-
 
 # FIXME figure out if I can use annotated types to set required fields
 
@@ -78,6 +77,7 @@ class DocBuildInfo:
 
     """
 
+    package_name: str = None
     basedir_for_building_docs: Path = None
     doc_build_command_deps: list[str, ...] = None
     doc_build_commands: list[str, ...] = None
@@ -89,7 +89,7 @@ class DocBuildInfo:
     def missing_information_keys(self) -> Tuple[str, ...]:
         """Return the names of missing pieces of information, if any"""
         # In lieu of class variables https://github.com/python-attrs/attrs/issues/220 we
-        # just store the required keys kere
+        # just store the required keys here
         necessary_keys = [
             "basedir_for_building_docs",
             "doc_build_command_deps",
@@ -102,6 +102,7 @@ class DocBuildInfo:
 
     @property
     def needs_icon(self) -> bool:
+        """Return whether this package needs and icon to build the docs"""
         return self.use_icon and self.icon_path is None
 
     def dump_test_file(self, dump_file_path: Path) -> None:
@@ -116,7 +117,7 @@ class DocBuildInfo:
     @classmethod
     def from_dict(cls, data: DocBuildInfoDict) -> Self:
         """Return DocBuildInfo from json `data`"""
-        raise NotImplementedError  # Update lates
+        raise NotImplementedError  # Update later
         return cls(
             basedir_for_building_docs=Path(data["basedir_for_building_docs"])
             if data["basedir_for_building_docs"]
@@ -126,3 +127,15 @@ class DocBuildInfo:
             icon_path=Path(data["icon_path"]) if data["icon_path"] else None,
             start_page=data["start_page"],
         )
+
+    def ensure_info_is_sufficient(self) -> None:
+        """Raise ClickException if this object has insufficient info to proceed"""
+        if missing_keys := self.missing_information_keys():
+            error_message = (
+                "Unable to extract all necessary information from the repo to proceed\n"
+                f"Got {self}\n"
+                f"Missing the following pieces of information: {missing_keys}\n"
+                f"Consider improving the heuristic for extraction or writing an override "
+                f"for this module: {self.package_name}"
+            )
+            raise ClickException(error_message)

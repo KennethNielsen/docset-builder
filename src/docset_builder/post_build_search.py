@@ -1,3 +1,5 @@
+"""This module implements the post-build search for built docs"""
+
 from pathlib import Path
 from typing import Generator
 

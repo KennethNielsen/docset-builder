@@ -1,7 +1,7 @@
 """This module implements the main cli interface"""
 import logging
 from pathlib import Path
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
 import click
 import structlog

@@ -6,7 +6,6 @@ from typing import Generator
 
 import structlog
 import toml
-from click import ClickException
 
 from .data_structures import DocBuildInfo
 from .overrides import DOC_BUILD_INFO_OVERRIDES
@@ -42,6 +41,7 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     """Return docbuild information"""
     LOG.info("Get docbuild information", name=name, repository_path=repository_path)
     docbuild_info = DOC_BUILD_INFO_OVERRIDES.get(name, DocBuildInfo())
+    docbuild_info.package_name = name
     LOG.debug("Got overrides", docbuild_info=docbuild_info)
 
     found_good = False
@@ -56,7 +56,6 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     if make_file_path.exists() and not found_good:
         LOG.debug("Found Makefile")
         docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
-
 
     docbuild_info = _add_all_requirements(docbuild_info, repository_path)
 
@@ -116,6 +115,7 @@ def _extract_from_tox_ini(docbuild_info: DocBuildInfo, tox_ini_path: Path) -> Do
 
     return docbuild_info
 
+
 def _extract_from_makefile(docbuild_info, make_file_path, repository_path):
     logger = LOG.bind(source="Makefile")
     sections = extract_sections_from_makefile(make_file_path)
@@ -167,7 +167,6 @@ def _add_all_requirements(doc_build_info: DocBuildInfo, repository_path: Path) -
         except KeyError:
             pass
 
-
     doc_build_info.all_deps = all_dependencies
     return doc_build_info
 
@@ -204,19 +203,6 @@ def _requirements_from_file(requirement_path: Path) -> Generator[str, None, None
         LOG.error("UNABLE TO READ REQUIREMENTS FROM FILE", requirement_path=requirement_path)
 
 
-def ensure_docbuild_info_is_sufficient(package_name: str, doc_build_info: DocBuildInfo) -> None:
-    """Raise ClickException if `pypi_info` has insufficient info to proceed"""
-    if missing_keys := doc_build_info.missing_information_keys():
-        error_message = (
-            "Unable to extract all necessary information from the repo to proceed\n"
-            f"Got {doc_build_info}\n"
-            f"Missing the following pieces of information: {missing_keys}\n"
-            f"Consider improving the heuristic for extraction or writing an override "
-            f"for this module: {package_name}"
-        )
-        raise ClickException(error_message)
-
-
 def _look_for_docs_dir(repository_path, docbuild_info):
     """Look for a "docs" dir and add information from that"""
     if not docbuild_info.missing_information_keys():
@@ -240,5 +226,3 @@ def _look_for_docs_dir(repository_path, docbuild_info):
         docbuild_info.doc_build_commands = ["make html"]
 
     return docbuild_info
-
-

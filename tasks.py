@@ -256,12 +256,16 @@ def coverage(context, show_missing=False):
 
 
 @task
-def itch(context):
+def itch(context, verbose=False):
     """Build the docsets for the projects in the my-own-itch-list.txt file"""
     with context.cd(THIS_DIR):
         with open("my-own-itch-list.txt") as file_:
             for application in file_:
                 if application.startswith("#"):
                     continue
-                print(f"\n\n# Try and build {application}")
-                ret = context.run(f"python -m docset_builder.main install -n -b {application}")
+                rprint(f"[b]# Try to build {application}[/b]")
+                ret = context.run(
+                    f"python -m docset_builder.main install -n {'-v' if verbose else ''} -b "
+                    f"{application}")
+                rprint("[b green] -> OK[b green]")
+                print()

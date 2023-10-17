@@ -19,7 +19,7 @@ covers only searching tox.ini, but other configs will be added
 
 import tempfile
 from pathlib import Path
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
 import structlog
 
@@ -28,7 +28,7 @@ from .docset_library import install_docset
 from .post_build_search import _search_for_built_docs
 from .pypi import get_information_for_package
 from .repositories import clone_or_update
-from .repository_search import ensure_docbuild_info_is_sufficient, get_docbuild_information
+from .repository_search import get_docbuild_information
 from .virtual_environments import build_docs
 
 LOG = structlog.get_logger(mod="core")
@@ -56,9 +56,8 @@ def install(
             package_name, repository_path=local_repository_path
         )
         logger.info("Got docbuild information", docbuild_information=docbuild_information)
-        ensure_docbuild_info_is_sufficient(
-            package_name=package_name, doc_build_info=docbuild_information
-        )
+        docbuild_information.ensure_info_is_sufficient()
+        return
 
         build_docs(
             package_name=package_name,

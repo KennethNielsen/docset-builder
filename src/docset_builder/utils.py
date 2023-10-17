@@ -1,21 +1,23 @@
+"""A utility for extracting sections from a makefile"""
 
 import re
 from pathlib import Path
 
-from attr import define, Factory
+from attr import Factory, define
 
-MAKEFILE_SECTION_HEADER = re.compile("^([\w-]*):([\w ]*)$")
+MAKEFILE_SECTION_HEADER = re.compile(r"^([\w-]*):([\w ]*)$")
+
 
 @define
-class Section:
+class _Section:
     name: str
     deps: list
     lines: list[str] = Factory(list)
 
 
-def extract_sections_from_makefile(makefile_path: Path):
+def extract_sections_from_makefile(makefile_path: Path):  # noqa: C901
     """Extract command sections from makefile at `makefile_path`"""
-    # This is obviously sub-optimal, but I didn't find a tool that seemed well used and
+    # This is obviously sub-optimal, but I didn't find a tool that seemed well-used and
     # maintained at first glace
     with open(makefile_path) as file_:
         sections = {}
@@ -33,7 +35,7 @@ def extract_sections_from_makefile(makefile_path: Path):
                     deps = deps_str.strip().split(" ")
                 else:
                     deps = []
-                current_section = Section(name, deps)
+                current_section = _Section(name, deps)
             else:
                 if current_section:
                     current_section.lines.append(line.strip())

@@ -1,9 +1,11 @@
+# Some are disabled becuase they have no tool configs, and I would like to not implement the full
+# guessing solution until after covering a good part of top 100
 arrow
 pytest
 attrs
 flask
 requests
-pyserial
+# pyserial, dicabled due to no tool config
 numpy
 psutil
 cx_Freeze
