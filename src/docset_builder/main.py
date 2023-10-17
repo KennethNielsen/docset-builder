@@ -27,9 +27,9 @@ def config_verbosity(verbose: bool, very_verbose: bool) -> None:
     elif verbose:
         level = logging.INFO
     else:
-        level = logging.CRITICAL
-    LOG.debug("Set log level", log_level=level)
+        level = logging.ERROR
     structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(level))
+    LOG.debug("Set log level", log_level=level)
     # This is the one logging that should have happened at module level, but that would
     # defeat the verbosity settings, so instead it is wrapped in a function at called here
     log_cache_dirs()
