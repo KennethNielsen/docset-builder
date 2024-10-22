@@ -1,10 +1,13 @@
 """This module implements shared data structures"""
+from contextlib import contextmanager
 from json import dump
 from pathlib import Path
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Optional, Tuple, TypeVar, cast, Iterator, Any
 
-from attr import asdict, define
+from attr import Attribute, asdict, define, field, fields
 from click import ClickException
+from rich.console import Console
+from rich.table import Table
 from typing_extensions import Self, TypedDict
 
 from docset_builder.directories import REPOSITORIES_DIR
@@ -61,12 +64,39 @@ DocBuildInfoDict = TypedDict(
     },
 )
 
+ValueType = TypeVar("ValueType")
+
+
+def _on_setattr(
+    instance: "DocBuildInfo", attribute: Attribute[ValueType], value: ValueType
+) -> ValueType:
+    """Enforce set-once-sourced behavior
+
+    This function is called when certain attrs properties are set. Its purpose is to make sure
+    that a property can only be set once and can only be set if the object knows the source of
+    the set (as indicated by the `set_source` context manager).
+
+    """
+    if not instance._current_source:
+        raise ValueError(
+            f"Disallowed to set property '{attribute.name}' without source set. Please only set "
+            "properties of this class inside the `set_source` context manager."
+        )
+
+    # Enforce set-once behavior by returning the existing value, if it has already been set
+    if attribute.name in instance._sources:
+        return cast(ValueType, getattr(instance, attribute.name))
+
+    instance._sources[attribute.name] = instance._current_source
+    return value
+
 
 @define
 class DocBuildInfo:
     """Build information
 
     Attributes:
+        package_name (str): The name of the package
         basedir_for_building_docs (Path): The directory from which to build the docs
         doc_build_command_deps (tuple[str]): The doc build dependencies
         doc_build_commands (tuple[str]): Command that will build the docs
@@ -77,14 +107,51 @@ class DocBuildInfo:
 
     """
 
-    package_name: str = None
-    basedir_for_building_docs: Path = None
-    doc_build_command_deps: list[str] = None
-    doc_build_commands: list[str] = None
-    all_deps: list[str] = None
-    use_icon: bool = False
-    icon_path: Path = None
-    start_page: str = None
+    package_name: Optional[str] = field(default=None, on_setattr=_on_setattr)
+    basedir_for_building_docs: Optional[Path] = field(default=None, on_setattr=_on_setattr)
+    doc_build_command_deps: Optional[list[str]] = field(default=None, on_setattr=_on_setattr)
+    doc_build_commands: Optional[list[str]] = field(default=None, on_setattr=_on_setattr)
+    all_deps: Optional[list[str]] = field(default=None, on_setattr=_on_setattr)
+    use_icon: bool = field(default=False, on_setattr=_on_setattr)
+    icon_path: Optional[Path] = field(default=None, on_setattr=_on_setattr)
+    start_page: Optional[str] = field(default=None, on_setattr=_on_setattr)
+
+    _sources: dict[str, str] = field(init=False, factory=dict, alias="_sources")
+    _current_source: Optional[str] = field(init=False, default=None, alias="_current_source")
+
+    def __attrs_post_init__(self) -> None:
+        """Mark attributes set (different from default) during __init__ as overrides"""
+        for field_ in fields(self.__class__):
+            if field_.name.startswith("_"):
+                continue
+            if getattr(self, field_.name) != field_.default:
+                self._sources[field_.name] = "[bold bright_blue]OVERRIDE[/bold bright_blue]"
+
+    @contextmanager
+    def set_source(self, source_name: str) -> Iterator["DocBuildInfo"]:
+        """Set the information source to `source_name`within this context manager"""
+        self._current_source = source_name
+        yield self
+        self._current_source = None
+
+    def print_values_and_sources(self) -> None:
+        """Print out the attribute names, values and source in a rich table"""
+        table = Table(title=f"{self.__class__.__name__} Properties And Values")
+        table.add_column("Name", justify="right", style="cyan", no_wrap=True)
+        table.add_column("Value", style="magenta")
+        table.add_column("Source", style="green")
+
+        for field_ in fields(self.__class__):
+            name = field_.name
+            if name.startswith("_"):
+                continue
+
+            value = getattr(self, name)
+            source = self._sources.get(name, "[bold red]NONE[/bold red]")
+            table.add_row(name, str(value), source)
+
+        console = Console()
+        console.print(table)
 
     def missing_information_keys(self) -> Tuple[str, ...]:
         """Return the names of missing pieces of information, if any"""

@@ -37,12 +37,12 @@ def _add_icon_file(repository_path: Path, docbuild_info: DocBuildInfo) -> DocBui
     return docbuild_info
 
 
-
 def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     """Return docbuild information"""
     LOG.info("Get docbuild information", name=name, repository_path=repository_path)
     docbuild_info = DOC_BUILD_INFO_OVERRIDES.get(name, DocBuildInfo())
-    docbuild_info.package_name = name
+    with docbuild_info.set_source("CLI"):
+        docbuild_info.package_name = name
     LOG.debug("Got overrides", docbuild_info=docbuild_info)
 
     docbuild_info = _add_all_requirements(docbuild_info, repository_path)
@@ -50,20 +50,25 @@ def get_docbuild_information(name: str, repository_path: Path) -> DocBuildInfo:
     tox_ini_path = repository_path / "tox.ini"
     if tox_ini_path.exists():
         LOG.debug("Found tox.ini file")
-        docbuild_info = _extract_from_tox_ini(docbuild_info, tox_ini_path)
+        with docbuild_info.set_source("tox"):
+            docbuild_info = _extract_from_tox_ini(docbuild_info, tox_ini_path)
 
     make_file_path = repository_path / "Makefile"
     if make_file_path.exists() and docbuild_info.missing_information_keys():
         LOG.debug("Found Makefile")
-        docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
+        with docbuild_info.set_source("Make"):
+            docbuild_info = _extract_from_makefile(docbuild_info, make_file_path, repository_path)
 
     if docbuild_info.missing_information_keys():
-        docbuild_info = _look_for_spin_tool(docbuild_info, repository_path)
+        with docbuild_info.set_source("spin"):
+            docbuild_info = _look_for_spin_tool(docbuild_info, repository_path)
 
-    docbuild_info = _add_start_page_info(
-        repository_path=repository_path, docbuild_info=docbuild_info
-    )
-    docbuild_info = _add_icon_file(repository_path=repository_path, docbuild_info=docbuild_info)
+    with docbuild_info.set_source("Start page"):
+        docbuild_info = _add_start_page_info(
+            repository_path=repository_path, docbuild_info=docbuild_info
+        )
+    with docbuild_info.set_source("Icon file"):
+        docbuild_info = _add_icon_file(repository_path=repository_path, docbuild_info=docbuild_info)
 
     # docbuild_info = _look_for_docs_dir(repository_path=repository_path,
     # docbuild_info=docbuild_info)
@@ -142,6 +147,7 @@ def _look_for_spin_tool(docbuild_info: DocBuildInfo, repository_path: Path) -> D
         docbuild_info.basedir_for_building_docs = repository_path
 
     return docbuild_info
+
 
 def _extract_from_makefile(
     docbuild_info: DocBuildInfo, make_file_path: Path, repository_path: Path
